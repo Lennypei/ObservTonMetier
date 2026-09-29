@@ -1121,7 +1121,7 @@
         document.querySelector("#contracts-lead").textContent =
           `Répartition des ${total} offres selon le type de contrat annoncé.`;
         const contractsChart = document.querySelector("#contracts-chart");
-        contractsChart.src = `data/${encodeURIComponent(code)}/contrats.png`;
+        contractsChart.src = `../data/${encodeURIComponent(code)}/contrats.png`;
         contractsChart.alt = `Répartition des contrats pour ${nom} (${code}).`;
         document.querySelector("#contracts-caption").textContent =
           `Types de contrats parmi les offres actives associées au code ROME ${code}.`;
@@ -1143,7 +1143,7 @@
         document.querySelector("#salary-lead").textContent =
           `Salaires bruts annuels communiqués dans les offres ${code}.`;
         const salaryChart = document.querySelector("#salary-chart");
-        salaryChart.src = `data/${encodeURIComponent(code)}/salaires.png`;
+        salaryChart.src = `../data/${encodeURIComponent(code)}/salaires.png`;
         salaryChart.alt = `Histogramme des ${paid} salaires renseignés pour ${nom}.`;
         document.querySelector("#salary-caption").textContent = paid
           ? `Répartition des ${paid} salaires renseignés ; les lignes indiquent la moyenne et la médiane.`
@@ -1173,7 +1173,7 @@
         }
 
         const normalChart = document.querySelector("#normal-chart");
-        normalChart.src = `data/${encodeURIComponent(code)}/courbe_gauss_salaires.png`;
+        normalChart.src = `../data/${encodeURIComponent(code)}/courbe_gauss_salaires.png`;
         normalChart.alt = paid
           ? `Courbe normale théorique des salaires de ${nom}, avec moyenne et médiane.`
           : `Graphique indiquant qu’aucun salaire n’est disponible pour ${nom}.`;
@@ -1218,7 +1218,7 @@
         status.textContent = "Chargement des offres et calcul des indicateurs globaux…";
         status.hidden = false;
         try {
-          const indexResponse = await fetch("data/metiers.json");
+          const indexResponse = await fetch("../data/metiers.json");
           if (!indexResponse.ok) throw new Error(`HTTP ${indexResponse.status} lors du chargement de la liste.`);
           const index = await indexResponse.json();
           if (!Array.isArray(index) || !index.length) throw new Error("L’index des métiers est vide.");
@@ -1226,7 +1226,7 @@
             if (!/^[A-Z][0-9]{4}$/.test(item.code) || !item.nom) {
               throw new Error("L’index contient un métier avec un code ou un nom invalide.");
             }
-            const base = `data/${encodeURIComponent(item.code)}/`;
+            const base = `../data/${encodeURIComponent(item.code)}/`;
             const [resumeResponse, statsResponse] = await Promise.all([
               fetch(`${base}resume.json`),
               fetch(`${base}stats.json`)
@@ -1401,7 +1401,7 @@
         content.querySelector("#contracts-lead").textContent =
           `Répartition des ${total} offres selon le type de contrat annoncé.`;
         const contractImage = content.querySelector("#contracts-chart");
-        contractImage.src = `data/${code}/contrats.png`;
+        contractImage.src = `../data/${code}/contrats.png`;
         contractImage.alt = `Répartition des types de contrat pour ${metier.nom} (${code}).`;
         content.querySelector("#contracts-caption").textContent =
           `Types de contrats parmi les offres actives associées au code ROME ${code}.`;
@@ -1423,7 +1423,7 @@
         content.querySelector("#salary-lead").textContent =
           `Salaires bruts annuels communiqués dans les offres ${code}.`;
         const salaryChart = content.querySelector("#salary-chart");
-        salaryChart.src = `data/${code}/salaires.png`;
+        salaryChart.src = `../data/${code}/salaires.png`;
         salaryChart.alt = `Histogramme des ${paid} salaires renseignés pour ${metier.nom}.`;
         content.querySelector("#salary-caption").textContent = paid
           ? `Répartition des ${paid} salaires renseignés ; les lignes indiquent la moyenne et la médiane.`
@@ -1445,7 +1445,7 @@
         }
 
         const normalChart = content.querySelector("#normal-chart");
-        normalChart.src = `data/${code}/courbe_gauss_salaires.png`;
+        normalChart.src = `../data/${code}/courbe_gauss_salaires.png`;
         normalChart.alt = paid
           ? `Courbe normale théorique des salaires de ${metier.nom}, avec moyenne et médiane.`
           : `Graphique indiquant qu’aucun salaire n’est disponible pour ${metier.nom}.`;
@@ -1475,7 +1475,7 @@
         status.hidden = false;
         selector.disabled = true;
         try {
-          const base = `data/${encodeURIComponent(code)}/`;
+          const base = `../data/${encodeURIComponent(code)}/`;
           const [resumeResponse, statsResponse] = await Promise.all([
             fetch(`${base}resume.json`),
             fetch(`${base}stats.json`)
@@ -1512,7 +1512,7 @@
 
       async function initialize() {
         try {
-          const response = await fetch("data/metiers.json");
+          const response = await fetch("../data/metiers.json");
           if (!response.ok) throw new Error(`HTTP ${response.status} lors du chargement de la liste des métiers.`);
           const metiers = await response.json();
           if (!Array.isArray(metiers) || !metiers.length) {

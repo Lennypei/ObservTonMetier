@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Observatoire des offres Social Media Manager associées au code ROME E1124.">
+  <meta name="theme-color" content="#f4f7fb">
+  <title>Observatoire métier — Social Media Manager (E1124)</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172033;
+      --muted: #5c687d;
+      --line: #e2e8f0;
+      --paper: #fff;
+      --blue: #2563eb;
+      --blue-dark: #1d4ed8;
+      --blue-soft: #eff6ff;
+      --yellow: #f5c542;
+      --radius: 20px;
+      --shadow: 0 16px 44px rgb(26 44 75 / 7%);
+    }
+
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(180deg, #111827 0, #26303e 150px, #dfe3e8 400px, #f4f7fb 650px, #fff 100%);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.65;
+    }
+
+    .page {
+      width: min(1120px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 30px 0 64px;
+    }
+
+    .topline {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 16px;
+      color: #cbd5e1;
+      font-size: 0.82rem;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      color: #f8fafc;
+      font-weight: 750;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-mark {
+      display: inline-grid;
+      width: 30px;
+      height: 30px;
+      place-items: center;
+      border-radius: 10px;
+      background: var(--blue);
+      color: #fff;
+    }
+
+    .topline-note { margin: 0; }
+
+    .metier-picker {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin: 0 0 16px;
+      padding: 13px 16px;
+      border: 1px solid rgb(226 232 240 / 90%);
+      border-radius: 14px;
+      background: rgb(255 255 255 / 94%);
+      box-shadow: 0 8px 24px rgb(26 44 75 / 6%);
+    }
+
+    .metier-picker label {
+      flex: 0 0 auto;
+      color: #344157;
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    .metier-picker select {
+      min-width: min(100%, 300px);
+      padding: 9px 34px 9px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 9px;
+      background: #fff;
+      color: var(--ink);
+      font: inherit;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+
+    .metier-picker select:focus-visible {
+      outline: 3px solid #93c5fd;
+      outline-offset: 2px;
+    }
+
+    .metier-status {
+      margin: 0 0 12px;
+      color: #9f2d20;
+      font-size: 0.9rem;
+    }
+
+    .metier-status[data-state="loading"] { color: #526078; }
+
+    .tabs {
+      position: sticky;
+      top: 10px;
+      z-index: 10;
+      display: flex;
+      gap: 7px;
+      margin-bottom: 20px;
+      padding: 7px;
+      overflow-x: auto;
+      border: 1px solid rgb(226 232 240 / 90%);
+      border-radius: 16px;
+      background: rgb(255 255 255 / 94%);
+      box-shadow: 0 8px 28px rgb(26 44 75 / 7%);
+      backdrop-filter: blur(14px);
+      scrollbar-width: thin;
+    }
+
+    .tab {
+      display: inline-flex;
+      min-height: 44px;
+      flex: 0 0 auto;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 9px 14px;
+      border: 1px solid transparent;
+      border-radius: 11px;
+      background: transparent;
+      color: #526078;
+      font: inherit;
+      font-size: 0.87rem;
+      font-weight: 680;
+      white-space: nowrap;
+      cursor: pointer;
+      transform-origin: center;
+      transition: transform 160ms ease, background 150ms ease, color 150ms ease, box-shadow 150ms ease;
+    }
+
+    .tab:hover {
+      z-index: 1;
+      transform: scale(1.035);
+      background: #f1f5f9;
+      color: var(--ink);
+    }
+
+    .tab[aria-selected="true"] {
+      background: var(--blue);
+      color: #fff;
+      box-shadow: 0 5px 12px rgb(37 99 235 / 20%);
+    }
+
+    .tab-work {
+      border-color: #dfb51c;
+      background: repeating-linear-gradient(135deg, rgb(214 167 23 / 22%) 0 7px, transparent 7px 14px), #fff4bf;
+      color: #5c4700;
+    }
+
+    .tab-work:hover {
+      background: repeating-linear-gradient(135deg, rgb(214 167 23 / 28%) 0 7px, transparent 7px 14px), #ffed91;
+      color: #453600;
+    }
+
+    .tab-work[aria-selected="true"] {
+      border-color: #c28b00;
+      background: repeating-linear-gradient(135deg, rgb(32 38 52 / 14%) 0 7px, transparent 7px 14px), #ffd43b;
+      color: #202634;
+      box-shadow: 0 5px 14px rgb(142 104 0 / 24%);
+    }
+
+    .work-badge {
+      padding: 2px 7px;
+      border: 1px solid #dfb51c;
+      border-radius: 999px;
+      background: #ffe477;
+      color: #594200;
+      font-size: 0.68rem;
+      font-weight: 800;
+    }
+
+    .panel { animation: appear 200ms ease-out; }
+
+    @keyframes appear {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .hero {
+      position: relative;
+      display: grid;
+      min-height: 360px;
+      grid-template-columns: minmax(0, 1fr) minmax(220px, 34%);
+      align-items: center;
+      gap: 24px;
+      margin-bottom: 20px;
+      padding: clamp(26px, 5vw, 54px);
+      overflow: hidden;
+      border: 1px solid rgb(255 255 255 / 16%);
+      border-radius: 24px;
+      background: linear-gradient(125deg, #111827 0%, #29313c 34%, #dfe3e8 70%, #fff 100%);
+      box-shadow: var(--shadow);
+    }
+
+    .hero-copy { position: relative; z-index: 1; }
+
+    .eyebrow {
+      margin: 0 0 12px;
+      color: #a8caff;
+      font-size: 0.76rem;
+      font-weight: 800;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+
+    h1 {
+      max-width: 690px;
+      margin-bottom: 18px;
+      color: #f8fafc;
+      font-size: clamp(2.1rem, 5.2vw, 4rem);
+      line-height: 1.07;
+      letter-spacing: -0.055em;
+    }
+
+    .hero-description {
+      max-width: 660px;
+      margin-bottom: 20px;
+      color: #d4deeb;
+      font-size: clamp(1rem, 2vw, 1.12rem);
+    }
+
+    .hero-description strong { color: #fff; }
+
+    .source-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 11px;
+      border: 1px solid #d8e5f5;
+      border-radius: 999px;
+      background: rgb(255 255 255 / 82%);
+      color: #40516d;
+      font-size: 0.8rem;
+      font-weight: 650;
+    }
+
+    .source-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #22a06b;
+      box-shadow: 0 0 0 3px #dcfce7;
+    }
+
+    .hero-photo {
+      display: block;
+      width: 100%;
+      height: 330px;
+      align-self: end;
+      object-fit: contain;
+      object-position: center bottom;
+      filter: drop-shadow(0 12px 14px rgb(26 44 75 / 12%));
+    }
+
+    .section-card {
+      margin-top: 20px;
+      padding: clamp(22px, 4vw, 38px);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--paper);
+      box-shadow: var(--shadow);
+    }
+
+    .section-heading {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 8px;
+    }
+
+    .section-number {
+      display: grid;
+      width: 40px;
+      height: 40px;
+      flex: 0 0 auto;
+      place-items: center;
+      border-radius: 13px;
+      background: var(--blue-soft);
+      color: var(--blue);
+      font-size: 0.9rem;
+      font-weight: 800;
+    }
+
+    h2 {
+      margin-bottom: 0;
+      font-size: clamp(1.4rem, 3vw, 1.85rem);
+      line-height: 1.25;
+      letter-spacing: -0.03em;
+    }
+
+    .section-lead {
+      margin: 0 0 24px 54px;
+      color: var(--muted);
+    }
+
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 13px;
+      margin: 20px 0;
+    }
+
+    .metric {
+      min-height: 110px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: #fff;
+    }
+
+    .metric strong {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--ink);
+      font-size: clamp(1.2rem, 2.7vw, 1.7rem);
+      line-height: 1.2;
+      letter-spacing: -0.04em;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 0.86rem;
+      line-height: 1.4;
+    }
+
+    .guide {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      margin-top: 22px;
+      padding: 20px 22px;
+      border: 1px solid #dbeafe;
+      border-radius: 15px;
+      background: #f4f8ff;
+    }
+
+    .guide p { margin: 0; color: #40516d; }
+
+    .primary-link {
+      flex: 0 0 auto;
+      padding: 10px 14px;
+      border: 0;
+      border-radius: 10px;
+      background: var(--blue);
+      color: #fff;
+      font: inherit;
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .primary-link:focus-visible, .tab:focus-visible {
+      outline: 3px solid #93c5fd;
+      outline-offset: 3px;
+    }
+
+    figure {
+      margin: 0 0 18px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: #fff;
+    }
+
+    figure img { display: block; width: 100%; height: auto; }
+
+    figcaption {
+      padding: 10px 8px 2px;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .salary-calculation {
+      display: grid;
+      gap: 10px;
+      margin: 14px 8px 4px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: #f6f8fb;
+      color: #344157;
+      font-size: 0.9rem;
+    }
+
+    .salary-calculation p { margin: 0; }
+    .salary-calculation strong { color: var(--ink); }
+
+    .analysis {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 20px;
+    }
+
+    .body-copy {
+      max-width: 900px;
+      margin: 22px 0 0;
+      color: #344157;
+    }
+
+    .note {
+      margin-top: 16px;
+      padding: 14px 16px;
+      border-left: 3px solid #f0b64a;
+      border-radius: 0 10px 10px 0;
+      background: #fffbeb;
+      color: #654c18;
+      font-size: 0.93rem;
+    }
+
+    .construction-card {
+      position: relative;
+      display: grid;
+      min-height: 350px;
+      margin-top: 20px;
+      padding: 32px;
+      overflow: hidden;
+      place-items: center;
+      border: 1px solid #e0c65c;
+      border-radius: 18px;
+      background: #fffdf4;
+      text-align: center;
+    }
+
+    .construction-card::before, .construction-card::after {
+      position: absolute;
+      right: -50px;
+      left: -50px;
+      height: 22px;
+      background: repeating-linear-gradient(135deg, #202631 0 15px, #f6c445 15px 30px);
+      content: "";
+    }
+
+    .construction-card::before { top: 0; }
+    .construction-card::after { bottom: 0; }
+    .construction-content { max-width: 540px; }
+
+    .construction-icon {
+      display: block;
+      margin-bottom: 12px;
+      font-size: 3.2rem;
+      line-height: 1;
+    }
+
+    .construction-card h2 {
+      margin-bottom: 8px;
+      font-size: clamp(1.5rem, 4vw, 2.1rem);
+    }
+
+    .construction-card p { margin: 0; color: var(--muted); }
+
+    footer {
+      margin-top: 28px;
+      color: #788397;
+      font-size: 0.85rem;
+      text-align: center;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+    }
+
+    @media (max-width: 760px) {
+      .page { width: min(100% - 24px, 1120px); padding-top: 18px; }
+      .hero { min-height: 310px; grid-template-columns: minmax(0, 1fr) 28%; gap: 8px; padding: 26px; }
+      .hero-photo { height: 265px; }
+      .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 520px) {
+      .topline-note { display: none; }
+      .metier-picker { align-items: stretch; flex-direction: column; gap: 6px; }
+      .metier-picker select { width: 100%; }
+      .tabs { top: 6px; margin-inline: -4px; }
+      .tab { padding: 9px 11px; font-size: 0.82rem; }
+      .work-badge { font-size: 0.62rem; }
+      .hero { min-height: 0; grid-template-columns: minmax(0, 1fr) 100px; gap: 4px; padding: 23px 18px; }
+      .hero-photo { height: 190px; }
+      h1 { font-size: clamp(1.8rem, 8vw, 2.5rem); }
+      .hero-description { font-size: 0.93rem; }
+      .kpis, .analysis { grid-template-columns: 1fr 1fr; gap: 9px; }
+      .metric { min-height: 100px; padding: 14px; }
+      .guide { align-items: flex-start; flex-direction: column; }
+      .section-lead { margin-left: 0; }
+      .section-card { padding: 20px 16px; }
+      figure { padding: 7px; }
+      figcaption { padding-inline: 6px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <div class="topline">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">M</span> Observatoire métier</div>
+      <p class="topline-note" id="site-context">Étude des offres d’emploi · ROME E1124</p>
+    </div>
+
+    <div class="metier-picker">
+      <label for="metier-select">Choisir un métier à explorer</label>
+      <select id="metier-select" aria-describedby="metier-status">
+        <option value="" selected>Chargement des métiers…</option>
+      </select>
+    </div>
+    <p class="metier-status" id="metier-status" role="status" aria-live="polite" hidden></p>
+
+    <div class="metier-content" id="metier-content" hidden>
+    <nav class="tabs" role="tablist" aria-label="Navigation de l’observatoire">
+      <button class="tab" id="tab-accueil" type="button" role="tab" aria-selected="true" aria-controls="page-accueil" tabindex="0" data-page="accueil">Accueil / Présentation</button>
+      <button class="tab" id="tab-contrats" type="button" role="tab" aria-selected="false" aria-controls="page-contrats" tabindex="-1" data-page="contrats">Répartition des contrats</button>
+      <button class="tab" id="tab-salaires" type="button" role="tab" aria-selected="false" aria-controls="page-salaires" tabindex="-1" data-page="salaires">Dispersion des salaires</button>
+      <button class="tab tab-work" id="tab-bivariee" type="button" role="tab" aria-selected="false" aria-controls="page-bivariee" tabindex="-1" data-page="bivariee">Plus d’offres d’emploi <span class="work-badge">🚧 En travaux</span></button>
+      <button class="tab tab-work" id="tab-insights" type="button" role="tab" aria-selected="false" aria-controls="page-insights" tabindex="-1" data-page="insights">Qui sommes-nous ? <span class="work-badge">🚧 En travaux</span></button>
+    </nav>
+
+    <section class="panel" id="page-accueil" role="tabpanel" aria-labelledby="tab-accueil" tabindex="0">
+      <header class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow" id="hero-eyebrow">Observatoire · ROME E1124</p>
+          <h1 id="hero-title">Observatoire métier : Social Media Manager (ROME E1124)</h1>
+          <p class="hero-description">Analyse statistique d’un corpus de <strong id="hero-total">45 offres d’emploi réelles</strong> issues de France Travail, à partir des données de l’Observatoire.</p>
+          <span class="source-pill"><span class="source-dot" aria-hidden="true"></span> Données France Travail · <span id="hero-date">28 septembre 2026</span></span>
+        </div>
+        <img class="hero-photo" src="assets/e1124/photo-equipe.png" alt="Portrait détouré de deux personnes sur fond transparent">
+      </header>
+
+      <div class="kpis" aria-label="Chiffres clés">
+        <article class="metric"><strong id="home-total">45</strong><span>offres analysées</span></article>
+        <article class="metric"><strong id="home-contract">CDI · 48,9 %</strong><span id="home-contract-label">contrat dominant · 22 offres</span></article>
+        <article class="metric"><strong id="home-median">37 500 €</strong><span>salaire médian affiché</span></article>
+        <article class="metric"><strong id="home-salary-share">20 %</strong><span id="home-salary-count">des offres indiquent un salaire (9 sur 45)</span></article>
+      </div>
+
+      <div class="guide">
+        <p><strong>Explorer l’analyse</strong><br>Choisissez un onglet pour consulter la répartition des contrats, les salaires ou les prochaines analyses.</p>
+        <button class="primary-link" type="button" data-go="contrats">Voir les contrats&nbsp; →</button>
+      </div>
+    </section>
+
+    <section class="panel" id="page-contrats" role="tabpanel" aria-labelledby="tab-contrats" tabindex="0" hidden>
+      <article class="section-card">
+        <div class="section-heading"><span class="section-number" aria-hidden="true">01</span><h2>Les contrats</h2></div>
+        <p class="section-lead" id="contracts-lead">Répartition des 45 offres selon le type de contrat annoncé.</p>
+        <figure>
+          <img id="contracts-chart" src="assets/e1124/contrats.png" alt="Répartition des types de contrat par métier.">
+          <figcaption id="contracts-caption">Types de contrats parmi les offres actives associées au code ROME E1124.</figcaption>
+        </figure>
+        <div class="kpis" id="contracts-kpis" aria-label="Chiffres clés des contrats"></div>
+        <p class="body-copy" id="contracts-summary"></p>
+      </article>
+    </section>
+
+    <section class="panel" id="page-salaires" role="tabpanel" aria-labelledby="tab-salaires" tabindex="0" hidden>
+      <article class="section-card">
+        <div class="section-heading"><span class="section-number" aria-hidden="true">02</span><h2>Dispersion des salaires</h2></div>
+        <p class="section-lead" id="salary-lead">Salaires bruts annuels communiqués dans les offres E1124.</p>
+        <figure>
+          <img id="salary-chart" src="assets/e1124/salaires.png" alt="Histogramme des salaires renseignés.">
+          <figcaption id="salary-caption">Répartition observée des salaires renseignés ; les lignes indiquent la moyenne et la médiane.</figcaption>
+          <div class="salary-calculation" id="salary-calculation" aria-label="Calcul de la moyenne et de la médiane"></div>
+        </figure>
+        <figure>
+          <img id="normal-chart" src="assets/e1124/courbe_gauss_salaires.png" alt="Courbe normale théorique des salaires.">
+          <figcaption id="normal-caption">Courbe normale théorique paramétrée avec la moyenne et l’écart-type ; elle complète l’histogramme observé, sans décrire à elle seule la distribution réelle.</figcaption>
+        </figure>
+        <div class="analysis" id="salary-stats"></div>
+        <p class="body-copy" id="normal-explanation"></p>
+        <p class="note" id="salary-caveat"></p>
+      </article>
+    </section>
+
+    <section class="panel" id="page-bivariee" role="tabpanel" aria-labelledby="tab-bivariee" tabindex="0" hidden>
+      <div class="construction-card"><div class="construction-content"><span class="construction-icon" aria-hidden="true">🚧</span><h2>Plus d’offres d’emploi</h2><p>Section en cours de construction - Analyse statistique à venir</p></div></div>
+    </section>
+
+    <section class="panel" id="page-insights" role="tabpanel" aria-labelledby="tab-insights" tabindex="0" hidden>
+      <div class="construction-card"><div class="construction-content"><span class="construction-icon" aria-hidden="true">🚧</span><h2>Qui sommes-nous ?</h2><p>Section en cours de construction - Analyse statistique à venir</p></div></div>
+    </section>
+
+    </div>
+    <footer id="site-footer">Données France Travail · Code ROME E1124 · Corpus observé le 28 septembre 2026</footer>
+  </main>
+
+  <script>
+    (() => {
+      const selector = document.querySelector("#metier-select");
+      const status = document.querySelector("#metier-status");
+      const footer = document.querySelector("#site-footer");
+      const context = document.querySelector("#site-context");
+      const content = document.querySelector("#metier-content");
+      const description = document.querySelector('meta[name="description"]');
+      let activeCode = "";
+      let selectionVersion = 0;
+      let navigationBound = false;
+
+      const euro = (value) => new Intl.NumberFormat("fr-FR", {
+        maximumFractionDigits: 0
+      }).format(value) + " €";
+      const percent = (value) => `${value.toLocaleString("fr-FR", {
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 1
+      })} %`;
+
+      function showPage(pageName, updateAddress = true) {
+        const tabs = Array.from(content.querySelectorAll('[role="tab"]'));
+        const panels = Array.from(content.querySelectorAll('[role="tabpanel"]'));
+        const activeTab = tabs.find((tab) => tab.dataset.page === pageName) || tabs[0];
+        if (!activeTab) return;
+        tabs.forEach((tab) => {
+          const active = tab === activeTab;
+          tab.setAttribute("aria-selected", String(active));
+          tab.tabIndex = active ? 0 : -1;
+        });
+        panels.forEach((panel) => {
+          panel.hidden = panel.id !== activeTab.getAttribute("aria-controls");
+        });
+        if (updateAddress) {
+          history.replaceState(null, "", `#${activeCode}/${activeTab.dataset.page}`);
+        }
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
+      function bindNavigation() {
+        if (navigationBound) return;
+        const tabs = Array.from(content.querySelectorAll('[role="tab"]'));
+        tabs.forEach((tab, index) => {
+          tab.addEventListener("click", () => showPage(tab.dataset.page));
+          tab.addEventListener("keydown", (event) => {
+            let nextIndex = index;
+            if (event.key === "ArrowRight") nextIndex = (index + 1) % tabs.length;
+            else if (event.key === "ArrowLeft") nextIndex = (index - 1 + tabs.length) % tabs.length;
+            else if (event.key === "Home") nextIndex = 0;
+            else if (event.key === "End") nextIndex = tabs.length - 1;
+            else return;
+            event.preventDefault();
+            tabs[nextIndex].focus();
+            showPage(tabs[nextIndex].dataset.page);
+          });
+        });
+        content.querySelectorAll("[data-go]").forEach((button) => {
+          button.addEventListener("click", () => showPage(button.dataset.go));
+        });
+        navigationBound = true;
+      }
+
+      function addMetric(container, value, label) {
+        const article = document.createElement("article");
+        article.className = "metric";
+        const strong = document.createElement("strong");
+        strong.textContent = value;
+        const span = document.createElement("span");
+        span.textContent = label;
+        article.append(strong, span);
+        container.append(article);
+      }
+
+      function updateDashboard(code, metier, resume, stats) {
+        const total = stats.total_offres;
+        const salaries = stats.salaires;
+        const paid = salaries.count;
+        const share = total ? paid / total * 100 : 0;
+        const title = `Observatoire métier : ${metier.nom} (ROME ${code})`;
+        const date = resume.date || stats.source_date || "";
+        const contracts = stats.contrats || [];
+        const dominant = contracts.reduce(
+          (best, contract) => !best || contract.effectif > best.effectif ? contract : best,
+          null
+        );
+
+        document.title = `Observatoire métier — ${metier.nom} (${code})`;
+        description.content = `Observatoire des offres d’emploi associées au métier ${metier.nom}, code ROME ${code}.`;
+        context.textContent = `Étude des offres d’emploi · ROME ${code}`;
+        footer.textContent = `Données France Travail · Code ROME ${code} · Corpus observé le ${date}`;
+        content.querySelector("#hero-eyebrow").textContent = `Observatoire · ROME ${code}`;
+        content.querySelector("#hero-title").textContent = title;
+        content.querySelector("#hero-total").textContent = `${total} offres d’emploi réelles`;
+        content.querySelector("#hero-date").textContent = date;
+        content.querySelector("#home-total").textContent = String(total);
+        content.querySelector("#home-contract").textContent = dominant
+          ? `${dominant.nom} · ${percent(dominant.pourcentage)}`
+          : "Aucun contrat";
+        content.querySelector("#home-contract-label").textContent = dominant
+          ? `contrat dominant · ${dominant.effectif} offre${dominant.effectif === 1 ? "" : "s"}`
+          : "aucune offre recensée";
+        content.querySelector("#home-median").textContent = salaries.median === null
+          ? "Non renseigné"
+          : euro(salaries.median);
+        content.querySelector("#home-salary-share").textContent = percent(share);
+        content.querySelector("#home-salary-count").textContent =
+          `des offres indiquent un salaire (${paid} sur ${total})`;
+
+        content.querySelector("#contracts-lead").textContent =
+          `Répartition des ${total} offres selon le type de contrat annoncé.`;
+        const contractImage = content.querySelector("#contracts-chart");
+        contractImage.src = `../data/${code}/contrats.png`;
+        contractImage.alt = `Répartition des types de contrat pour ${metier.nom} (${code}).`;
+        content.querySelector("#contracts-caption").textContent =
+          `Types de contrats parmi les offres actives associées au code ROME ${code}.`;
+        const contractKpis = content.querySelector("#contracts-kpis");
+        contractKpis.replaceChildren();
+        if (contracts.length) {
+          contracts.forEach((contract) => addMetric(
+            contractKpis,
+            percent(contract.pourcentage),
+            `${contract.nom} · ${contract.effectif} offre${contract.effectif === 1 ? "" : "s"}`
+          ));
+        } else {
+          addMetric(contractKpis, "0", "offre recensée");
+        }
+        content.querySelector("#contracts-summary").textContent = dominant
+          ? `${dominant.nom} est le type de contrat le plus fréquent (${dominant.effectif} offre${dominant.effectif === 1 ? "" : "s"}, ${percent(dominant.pourcentage)}). La répartition détaillée figure dans le graphique ci-dessus.`
+          : `Aucune offre n’est recensée pour le code ROME ${code}.`;
+
+        content.querySelector("#salary-lead").textContent =
+          `Salaires bruts annuels communiqués dans les offres ${code}.`;
+        const salaryChart = content.querySelector("#salary-chart");
+        salaryChart.src = `../data/${code}/salaires.png`;
+        salaryChart.alt = `Histogramme des ${paid} salaires renseignés pour ${metier.nom}.`;
+        content.querySelector("#salary-caption").textContent = paid
+          ? `Répartition des ${paid} salaires renseignés ; les lignes indiquent la moyenne et la médiane.`
+          : "Aucune offre ne renseigne de salaire.";
+        const calculation = content.querySelector("#salary-calculation");
+        calculation.replaceChildren();
+        if (paid && salaries.mean !== null) {
+          const meanLine = document.createElement("p");
+          meanLine.innerHTML = `<strong>Moyenne</strong> · ${euro(salaries.mean)} (${paid} salaire${paid === 1 ? "" : "s"} renseigné${paid === 1 ? "" : "s"})`;
+          const medianLine = document.createElement("p");
+          medianLine.innerHTML = `<strong>Médiane</strong> · ${euro(salaries.median)} (valeur centrale après classement)`;
+          const method = document.createElement("p");
+          method.textContent = "Pour une fourchette, le calcul retient son milieu.";
+          calculation.append(meanLine, medianLine, method);
+        } else {
+          const unavailable = document.createElement("p");
+          unavailable.textContent = "Impossible de calculer la moyenne ou la médiane : aucun salaire n’est renseigné.";
+          calculation.append(unavailable);
+        }
+
+        const normalChart = content.querySelector("#normal-chart");
+        normalChart.src = `../data/${code}/courbe_gauss_salaires.png`;
+        normalChart.alt = paid
+          ? `Courbe normale théorique des salaires de ${metier.nom}, avec moyenne et médiane.`
+          : `Graphique indiquant qu’aucun salaire n’est disponible pour ${metier.nom}.`;
+        content.querySelector("#normal-caption").textContent = paid
+          ? `Courbe normale théorique calculée à partir des salaires renseignés pour le code ROME ${code}.`
+          : "Aucune courbe ne peut être estimée sans salaire renseigné.";
+
+        const salaryStats = content.querySelector("#salary-stats");
+        salaryStats.replaceChildren();
+        addMetric(salaryStats, salaries.mean === null ? "—" : euro(salaries.mean), "salaire moyen brut annuel");
+        addMetric(salaryStats, salaries.median === null ? "—" : euro(salaries.median), "salaire médian brut annuel");
+        addMetric(salaryStats, salaries.std === null ? "—" : euro(salaries.std), "écart-type empirique (ddof = 1)");
+
+        const normalExplanation = content.querySelector("#normal-explanation");
+        const interval = salaries.mean_plus_minus_std;
+        normalExplanation.textContent = interval
+          ? `Sur la courbe normale théorique, la zone bleue entre la moyenne moins un écart-type et la moyenne plus un écart-type, soit de ${euro(interval.lower)} à ${euro(interval.upper)}, représente environ 68,3 % de la distribution modélisée.`
+          : "La courbe normale et son intervalle à un écart-type ne sont pas disponibles : il faut au moins deux salaires renseignés.";
+        const caveat = content.querySelector("#salary-caveat");
+        caveat.innerHTML = `<strong>Limite importante :</strong> seules ${paid} offres sur ${total} indiquent un salaire (${percent(share)}). Les statistiques calculées sur les salaires publiés peuvent être affectées par le biais des données manquantes et ne pas représenter l’ensemble des offres. La zone de 68,3 %, lorsqu’elle est affichée, est une propriété théorique de la loi normale, pas une proportion mesurée dans les annonces.`;
+      }
+
+      async function selectMetier(code, pageName = "accueil", updateAddress = true) {
+        const version = ++selectionVersion;
+        status.dataset.state = "loading";
+        status.textContent = `Chargement des données du métier ${code}…`;
+        status.hidden = false;
+        selector.disabled = true;
+        try {
+          const base = `../data/${encodeURIComponent(code)}/`;
+          const [resumeResponse, statsResponse] = await Promise.all([
+            fetch(`${base}resume.json`),
+            fetch(`${base}stats.json`)
+          ]);
+          if (!resumeResponse.ok || !statsResponse.ok) {
+            throw new Error(`Données indisponibles pour ${code} (HTTP ${resumeResponse.status}/${statsResponse.status}).`);
+          }
+          const [resume, stats] = await Promise.all([resumeResponse.json(), statsResponse.json()]);
+          if (version !== selectionVersion) return;
+          const metier = (resume.metiers || []).find((item) => item.code === code);
+          if (!metier || stats.code !== code || !Array.isArray(resume.offres)) {
+            throw new Error(`Les fichiers de données du métier ${code} sont incomplets ou incohérents.`);
+          }
+          updateDashboard(code, { ...metier, nom: metier.nom || metier.libelle }, resume, stats);
+          activeCode = code;
+          content.hidden = false;
+          bindNavigation();
+          showPage(pageName, updateAddress);
+          status.hidden = true;
+          status.textContent = "";
+          selector.value = code;
+        } catch (error) {
+          if (version !== selectionVersion) return;
+          status.dataset.state = "error";
+          status.textContent = `Impossible de charger ce métier : ${error.message}`;
+          status.hidden = false;
+          selector.value = activeCode || selector.value;
+        } finally {
+          if (version === selectionVersion) selector.disabled = false;
+        }
+      }
+
+      selector.addEventListener("change", () => selectMetier(selector.value));
+
+      async function initialize() {
+        try {
+          const response = await fetch("../data/metiers.json");
+          if (!response.ok) throw new Error(`HTTP ${response.status} lors du chargement de la liste des métiers.`);
+          const metiers = await response.json();
+          if (!Array.isArray(metiers) || !metiers.length) {
+            throw new Error("La liste distante ne contient aucun métier.");
+          }
+          selector.replaceChildren();
+          metiers.forEach((metier) => {
+            if (!/^[A-Z][0-9]{4}$/.test(metier.code) || !metier.nom) return;
+            const option = document.createElement("option");
+            option.value = metier.code;
+            option.textContent = `${metier.code} - ${metier.nom}`;
+            selector.append(option);
+          });
+          const [requestedCode, requestedPage] = window.location.hash.slice(1).split("/");
+          const defaultCode = Array.from(selector.options).some((option) => option.value === requestedCode)
+            ? requestedCode
+            : Array.from(selector.options).some((option) => option.value === "E1124")
+              ? "E1124"
+              : selector.options[0]?.value;
+          if (!defaultCode) throw new Error("Aucun code ROME valide dans l’index.");
+          selector.value = defaultCode;
+          await selectMetier(defaultCode, requestedPage || "accueil", false);
+        } catch (error) {
+          status.dataset.state = "error";
+          status.textContent = `Impossible de charger les métiers. Vérifiez que le script Python a été exécuté et ouvrez le site via un serveur web local. Détail : ${error.message}`;
+          status.hidden = false;
+          selector.disabled = true;
+        }
+      }
+
+      initialize();
+    })();
+  </script>
+</body>
+</html>
