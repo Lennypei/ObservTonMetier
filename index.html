@@ -672,6 +672,103 @@
     .detail-panel { margin-top: 16px; }
     .detail-panel .section-card { margin-top: 0; }
     .about-copy { max-width: 720px; margin: 16px auto 0; color: #40516d; }
+    .orientation-card {
+      max-width: 860px;
+      margin: 20px auto;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      box-shadow: var(--shadow);
+    }
+    .orientation-heading {
+      padding: 24px clamp(20px, 4vw, 34px);
+      background: linear-gradient(120deg, #eff6ff, #f8fafc);
+      border-bottom: 1px solid var(--line);
+    }
+    .orientation-heading h2 { margin: 0 0 7px; }
+    .orientation-heading p { margin: 0; color: var(--muted); }
+    .orientation-disclaimer {
+      display: block;
+      margin-top: 12px;
+      color: #526078;
+      font-size: 0.78rem;
+    }
+    .chat-messages {
+      display: grid;
+      gap: 14px;
+      max-height: 56vh;
+      min-height: 250px;
+      padding: 22px clamp(16px, 4vw, 30px);
+      overflow-y: auto;
+      background: #fbfcfe;
+    }
+    .chat-message {
+      width: fit-content;
+      max-width: min(92%, 620px);
+      padding: 13px 16px;
+      border: 1px solid #e2e8f0;
+      border-radius: 15px 15px 15px 4px;
+      background: #fff;
+      color: #26364f;
+      box-shadow: 0 3px 10px rgb(26 44 75 / 4%);
+    }
+    .chat-message-user {
+      justify-self: end;
+      border-color: #2563eb;
+      border-radius: 15px 15px 4px 15px;
+      background: #2563eb;
+      color: #fff;
+    }
+    .chat-choices {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+      padding: 0 clamp(16px, 4vw, 30px) 22px;
+      background: #fbfcfe;
+    }
+    .chat-choice {
+      padding: 10px 14px;
+      border: 1px solid #bfdbfe;
+      border-radius: 999px;
+      background: #fff;
+      color: #1e40af;
+      font: inherit;
+      font-size: 0.88rem;
+      font-weight: 650;
+      cursor: pointer;
+      transition: background 140ms ease, border-color 140ms ease, transform 140ms ease;
+    }
+    .chat-choice:hover {
+      transform: translateY(-1px);
+      border-color: #2563eb;
+      background: #eff6ff;
+    }
+    .chat-restart {
+      margin: 0 clamp(16px, 4vw, 30px) 22px;
+      padding: 8px 12px;
+      border: 0;
+      background: transparent;
+      color: #526078;
+      font: inherit;
+      font-size: 0.84rem;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+    .recommendation-list { display: grid; width: 100%; gap: 12px; }
+    .recommendation-card { min-height: 0; width: 100%; }
+    .recommendation-reason {
+      margin: 0;
+      color: #eaf1ff;
+      font-size: 0.84rem;
+      line-height: 1.45;
+    }
+    .recommendation-action {
+      align-self: flex-end;
+      color: #fff;
+      font-size: 0.8rem;
+      font-weight: 750;
+    }
 
     footer {
       margin-top: 28px;
@@ -748,6 +845,7 @@
     <nav class="tabs" aria-label="Navigation principale">
       <button class="tab" type="button" aria-current="page" data-main-page="home">Accueil</button>
       <button class="tab" type="button" data-main-page="jobs">Toutes nos offres</button>
+      <button class="tab" type="button" data-main-page="assistant">Assistant d’orientation</button>
       <button class="tab tab-work" type="button" data-main-page="more">D’autres offres d’emploi <span class="work-badge">🚧 En travaux</span></button>
       <button class="tab tab-work" type="button" data-main-page="about">Qui sommes-nous ? <span class="work-badge">🚧 En travaux</span></button>
     </nav>
@@ -774,6 +872,7 @@
       <div class="guide">
         <p><strong>Explorer les métiers</strong><br>Ouvrez « Toutes nos offres », puis choisissez un métier pour consulter ses contrats et ses salaires.</p>
         <button class="primary-link" type="button" data-open-jobs>Voir tous les métiers&nbsp; →</button>
+        <button class="primary-link" type="button" data-open-assistant>Trouver une piste&nbsp; →</button>
       </div>
     </section>
 
@@ -803,6 +902,19 @@
           </div>
         </div>
         <div class="job-groups" id="job-cards" aria-label="Métiers disponibles"></div>
+      </article>
+    </section>
+
+    <section class="section-panel" id="page-assistant" hidden>
+      <article class="orientation-card">
+        <header class="orientation-heading">
+          <h2>Assistant d’orientation</h2>
+          <p>Quelques questions pour faire émerger des métiers qui pourraient vous correspondre.</p>
+          <small class="orientation-disclaimer">Assistant guidé : les suggestions s’appuient sur vos choix et les métiers présents dans l’observatoire. Aucune réponse n’est envoyée à un service externe ; ce n’est pas une IA générative ni un bilan professionnel.</small>
+        </header>
+        <div class="chat-messages" id="orientation-messages" role="log" aria-live="polite" aria-relevant="additions"></div>
+        <div class="chat-choices" id="orientation-choices" aria-label="Réponses possibles"></div>
+        <button class="chat-restart" id="orientation-restart" type="button" hidden>Recommencer</button>
       </article>
     </section>
 
@@ -883,6 +995,14 @@
       const domainByCode = new Map(domains.flatMap((domain) =>
         domain.codes.map((code) => [code, domain.name])
       ));
+      const orientationTaskCodes = {
+        create: ["E1101", "E1124", "E1112", "E1103", "M1719", "E1107", "E1404"],
+        analyze: ["M1430", "M1705", "M1703", "D1415", "E1405", "M1426"],
+        organize: ["M1886", "E1107", "M1620", "D1438", "E1113", "M1703"],
+        advise: ["M1711", "M1716", "M1426", "M1705", "M1703"],
+        sell: ["M1706", "D1506", "M1430", "E1113", "D1438", "D1415"]
+      };
+      const orientationState = { domain: null, task: null };
       let activeJob = null;
       let previousScrollY = window.scrollY;
 
@@ -969,6 +1089,132 @@
         });
         if (pageName !== "detail") history.replaceState(null, "", `#${pageName}`);
         window.scrollTo({ top: 0, behavior: "smooth" });
+        if (pageName === "assistant" && !document.querySelector("#orientation-messages").childElementCount) {
+          startOrientation();
+        }
+      }
+
+      function addChatMessage(text, fromUser = false) {
+        const message = document.createElement("div");
+        message.className = `chat-message${fromUser ? " chat-message-user" : ""}`;
+        message.textContent = text;
+        document.querySelector("#orientation-messages").append(message);
+        message.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      }
+
+      function showOrientationChoices(choices) {
+        const container = document.querySelector("#orientation-choices");
+        container.replaceChildren();
+        choices.forEach((choice) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "chat-choice";
+          button.textContent = choice.label;
+          button.addEventListener("click", () => choice.select());
+          container.append(button);
+        });
+      }
+
+      function startOrientation() {
+        orientationState.domain = null;
+        orientationState.task = null;
+        document.querySelector("#orientation-messages").replaceChildren();
+        document.querySelector("#orientation-restart").hidden = false;
+        addChatMessage("Bonjour ! Je peux vous aider à explorer des pistes parmi les métiers de cet observatoire. Il n’y a pas de bonne ou de mauvaise réponse.");
+        askOrientationDomain();
+      }
+
+      function askOrientationDomain() {
+        addChatMessage("Quel domaine vous attire le plus ?");
+        showOrientationChoices([
+          { label: "Marketing et stratégie", value: "Marketing" },
+          { label: "Digital, web et données", value: "Digital" },
+          { label: "Communication et métiers transverses", value: "Frontière" },
+          { label: "Je ne sais pas encore", value: "all" }
+        ].map((answer) => ({
+          label: answer.label,
+          select: () => {
+            orientationState.domain = answer.value;
+            addChatMessage(answer.label, true);
+            askOrientationTask();
+          }
+        })));
+      }
+
+      function askOrientationTask() {
+        addChatMessage("Quel type d’activité vous ressemble le plus ?");
+        showOrientationChoices([
+          { label: "Créer des contenus et communiquer", value: "create" },
+          { label: "Analyser et mesurer des résultats", value: "analyze" },
+          { label: "Organiser des projets et coordonner", value: "organize" },
+          { label: "Conseiller et définir une stratégie", value: "advise" },
+          { label: "Développer les ventes et convaincre", value: "sell" },
+          { label: "Je veux découvrir plusieurs possibilités", value: "any" }
+        ].map((answer) => ({
+          label: answer.label,
+          select: () => {
+            orientationState.task = answer.value;
+            addChatMessage(answer.label, true);
+            showOrientationResults();
+          }
+        })));
+      }
+
+      function showOrientationResults() {
+        const taskCodes = orientationTaskCodes[orientationState.task] || [];
+        const ranked = Array.from(jobs.values()).map((job) => {
+          let score = 0;
+          const reasons = [];
+          if (orientationState.domain && orientationState.domain !== "all" &&
+              domainByCode.get(job.code) === orientationState.domain) {
+            score += 3;
+            reasons.push(`rattaché au domaine ${orientationState.domain}`);
+          }
+          if (taskCodes.includes(job.code)) {
+            score += 2;
+            reasons.push("en lien avec l’activité choisie");
+          }
+          return { job, score, reasons };
+        }).sort((left, right) =>
+          right.score - left.score ||
+          right.job.stats.total_offres - left.job.stats.total_offres ||
+          left.job.nom.localeCompare(right.job.nom, "fr")
+        );
+        const recommendations = ranked.slice(0, 3);
+        addChatMessage("Voici quelques métiers à explorer en priorité. Ce sont des pistes, pas un verdict : vous pouvez ouvrir chaque fiche pour voir les offres, les contrats et les salaires.");
+        const container = document.createElement("div");
+        container.className = "recommendation-list";
+        recommendations.forEach(({ job, reasons }) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "job-card recommendation-card";
+          const code = document.createElement("span");
+          code.className = "job-code";
+          code.textContent = `ROME ${job.code} · ${domainByCode.get(job.code) || "Autre métier"}`;
+          const name = document.createElement("span");
+          name.className = "job-name";
+          name.textContent = job.nom;
+          const reason = document.createElement("span");
+          reason.className = "recommendation-reason";
+          reason.textContent = reasons.length
+            ? `Cette piste correspond à vos réponses : ${reasons.join(" et ")}.`
+            : "Une piste à découvrir parmi les métiers de l’observatoire.";
+          const action = document.createElement("span");
+          action.className = "recommendation-action";
+          action.textContent = `${job.stats.total_offres} offre${job.stats.total_offres === 1 ? "" : "s"} · Voir l’analyse →`;
+          button.append(code, name, reason, action);
+          button.addEventListener("click", () => openJob(job.code));
+          container.append(button);
+        });
+        const message = document.createElement("div");
+        message.className = "chat-message";
+        message.append(container);
+        document.querySelector("#orientation-messages").append(message);
+        message.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        showOrientationChoices([
+          { label: "Modifier mes réponses", select: startOrientation },
+          { label: "Voir tous les métiers", select: () => setPage("jobs") }
+        ]);
       }
 
       function showDetailPage(pageName) {
@@ -1247,7 +1493,7 @@
           status.textContent = "";
           const [route, code, subpage] = window.location.hash.slice(1).split("/");
           if (route === "metier" && jobs.has(code)) openJob(code, subpage === "salaries" ? "salaries" : "contracts");
-          else setPage(route === "jobs" || route === "more" || route === "about" ? route : "home");
+          else setPage(route === "jobs" || route === "assistant" || route === "more" || route === "about" ? route : "home");
         } catch (error) {
           status.dataset.state = "error";
           status.textContent = `Impossible de charger les données du site. Vérifiez que le serveur web est actif et que les fichiers de data/ sont présents. Détail : ${error.message}`;
@@ -1272,7 +1518,9 @@
         }
       }, { passive: true });
       document.querySelector("[data-open-jobs]").addEventListener("click", () => setPage("jobs"));
+      document.querySelector("[data-open-assistant]").addEventListener("click", () => setPage("assistant"));
       document.querySelector("[data-back-to-jobs]").addEventListener("click", () => setPage("jobs"));
+      document.querySelector("#orientation-restart").addEventListener("click", startOrientation);
       document.querySelectorAll(".detail-tab").forEach((tab, index, tabs) => {
         tab.addEventListener("click", () => showDetailPage(tab.dataset.detailPage));
         tab.addEventListener("keydown", (event) => {
