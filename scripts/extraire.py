@@ -1,7 +1,7 @@
 r"""Récupère les offres France Travail des métiers suivis et les enregistre dans data/.
 
 Usage :
-    .venv\Scripts\python.exe scripts\extraire.py                 # tous les métiers de METIERS
+    .venv\Scripts\python.exe scripts\extraire.py                 # toutes les fiches ROME
     .venv\Scripts\python.exe scripts\extraire.py --verifier      # teste seulement la connexion
     .venv\Scripts\python.exe scripts\extraire.py --rome M1718    # un seul code, pour essayer
 
@@ -14,7 +14,7 @@ Ce que ça écrit :
 
 Les identifiants sont lus dans le fichier .env (voir .env.example) ou dans l'environnement
 (secrets GitHub Actions). API : https://francetravail.io/data/api/offres-emploi —
-150 offres par appel, 1 150 par requête, total réel dans l'en-tête Content-Range.
+50 offres maximum par code ROME, à partir de data/metiers_rome.json.
 """
 import argparse
 import csv
@@ -64,6 +64,41 @@ METIERS = {
     "D1415": ("Chargé(e) de relation client (CRM)", "Frontière", False),
 }
 
+FICHIER_REFERENTIEL_ROME = RACINE / "data" / "metiers_rome.json"
+FORMAT_CODE_ROME = re.compile(r"^[A-N][0-9]{4}$")
+
+
+def charger_referentiel_rome():
+    """Charge les codes et libellés des fiches ROME depuis l'open data France Travail."""
+    try:
+        with FICHIER_REFERENTIEL_ROME.open(encoding="utf-8") as fichier:
+            referentiel = json.load(fichier)
+    except (OSError, json.JSONDecodeError) as erreur:
+        raise RuntimeError(
+            f"Impossible de lire le référentiel ROME {FICHIER_REFERENTIEL_ROME}: {erreur}"
+        ) from erreur
+
+    entrees = referentiel.get("metiers") if isinstance(referentiel, dict) else None
+    if not isinstance(entrees, list) or not entrees:
+        raise ValueError(f"Le référentiel {FICHIER_REFERENTIEL_ROME} ne contient aucune fiche métier.")
+
+    metiers = {}
+    for entree in entrees:
+        if not isinstance(entree, dict):
+            raise ValueError("Entrée invalide dans le référentiel ROME : un objet était attendu.")
+        code, libelle = entree.get("code"), entree.get("libelle")
+        if not isinstance(code, str) or not FORMAT_CODE_ROME.fullmatch(code):
+            raise ValueError(f"Code ROME invalide dans le référentiel : {code!r}.")
+        if not isinstance(libelle, str) or not libelle.strip():
+            raise ValueError(f"Libellé manquant pour le code ROME {code}.")
+        if code in metiers:
+            raise ValueError(f"Code ROME dupliqué dans le référentiel : {code}.")
+        metiers[code] = libelle.strip()
+    return metiers
+
+
+ROME_METIERS = charger_referentiel_rome()
+
 TOKEN_URL = "https://entreprise.francetravail.fr/connexion/oauth2/access_token?realm=/partenaire"
 SEARCH_URL = "https://api.francetravail.io/partenaire/offresdemploi/v2/offres/search"
 
@@ -85,26 +120,40 @@ def obtenir_token():
     return r.json()["access_token"]
 
 
-def chercher(token, params, pas=150, maximum=1150):
-    """Pagine la recherche ; renvoie (liste d'offres, total annoncé par l'API dans Content-Range)."""
+def chercher(token, params, pas=50, maximum=50):
+    """Récupère jusqu'à 50 offres ; renvoie les offres et le total annoncé par l'API."""
     offres, total, debut = [], None, 0
     while debut < maximum:
         fin = min(debut + pas - 1, maximum - 1)
         r = requests.get(SEARCH_URL, params=dict(params, range=f"{debut}-{fin}"),
                          headers={"Authorization": f"Bearer {token}"}, timeout=30)
-        if r.status_code == 204:                     # aucune offre
+        time.sleep(0.15)
+        if r.status_code == 204:
             break
         if r.status_code not in (200, 206):
             raise RuntimeError(f"{r.status_code} : {r.text[:200]}")
-        m = re.search(r"/(\d+)", r.headers.get("Content-Range", ""))   # ex. "offres 0-149/1234"
+        if not r.content.strip():
+            break
+        m = re.search(r"/(\d+)", r.headers.get("Content-Range", ""))
         if m:
             total = int(m.group(1))
-        lot = r.json().get("resultats", [])
+        payload = r.json()
+        if not payload:
+            break
+        if isinstance(payload, dict):
+            lot = payload.get("resultats", [])
+        elif isinstance(payload, list):
+            lot = payload
+        else:
+            raise ValueError("Réponse inattendue de l'API France Travail : liste d'offres attendue.")
+        if not lot:
+            break
+        if not isinstance(lot, list):
+            raise ValueError("Réponse inattendue de l'API France Travail : 'resultats' doit être une liste.")
         offres.extend(lot)
         if len(lot) < pas or (total is not None and len(offres) >= total):
             break
         debut += pas
-        time.sleep(0.3)                              # on reste poli avec l'API
     return offres, total
 
 
@@ -129,16 +178,16 @@ def versions_connues():
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--verifier", action="store_true", help="teste seulement la connexion")
-    ap.add_argument("--rome", default="", help="un seul code ROME de METIERS, pour essayer")
+    ap.add_argument("--rome", default="", help="un seul code ROME du référentiel officiel, pour essayer")
     args = ap.parse_args()
 
     token = obtenir_token()
     print("Connexion à l'API France Travail : OK")
     if args.verifier:
         return
-    codes = [args.rome] if args.rome else list(METIERS)
-    if args.rome and args.rome not in METIERS:
-        sys.exit(f"{args.rome} n'est pas dans METIERS (scripts/extraire.py).")
+    codes = [args.rome] if args.rome else list(ROME_METIERS)
+    if args.rome and args.rome not in ROME_METIERS:
+        sys.exit(f"{args.rome} n'est pas dans data/metiers_rome.json.")
 
     aujourdhui = f"{date.today():%Y-%m-%d}"
     mois = aujourdhui[:7]
@@ -149,7 +198,9 @@ def main():
 
     actives, lignes_serie = [], []
     for code in codes:
-        offres, total = chercher(token, {"codeROME": code})
+        offres, total = chercher(token, {"codeROME": code}, pas=50, maximum=50)
+        if not offres:
+            continue
         nouvelles = modifiees = 0
         with (RACINE / "data" / "brut" / mois / f"{code}.jsonl").open("a", encoding="utf-8") as brut:
             for o in offres:
@@ -166,8 +217,7 @@ def main():
                 actives.append((code, o["id"], (o.get("dateActualisation") or "")[:10]))
         lignes_serie.append([aujourdhui, code, total if total is not None else len(offres),
                              len(offres), nouvelles, modifiees])
-        print(f"{code}  {METIERS[code][0]:<48} {len(offres):5d} offres, {nouvelles:4d} nouvelles, {modifiees:3d} modifiées")
-        time.sleep(0.5)
+        print(f"{code}  {ROME_METIERS[code]:<48} {len(offres):5d} offres, {nouvelles:4d} nouvelles, {modifiees:3d} modifiées")
 
     # Même logique pour les actives du jour : on remplace les codes relancés, on garde les autres.
     fichier_actives = RACINE / "data" / "actives" / f"{aujourdhui}.csv"
@@ -191,7 +241,8 @@ def main():
         w.writerow(["date", "rome", "total", "recuperees", "nouvelles", "modifiees"])
         w.writerows(sorted(lignes))
 
-    print(f"\n{aujourdhui} : {len(actives)} offres actives sur {len(codes)} métiers — "
+    print(f"\n{aujourdhui} : {len(actives)} offres récupérées sur {len(lignes_serie)} métiers avec offres "
+          f"({len(codes)} codes ROME interrogés) — "
           f"{sum(r[4] for r in lignes_serie)} nouvelles versions, {sum(r[5] for r in lignes_serie)} modifiées.")
 
 

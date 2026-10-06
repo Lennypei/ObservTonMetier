@@ -411,6 +411,7 @@
     }
 
     figure img { display: block; width: 100%; height: auto; }
+    figure img[hidden], .dynamic-chart[hidden] { display: none; }
 
     figcaption {
       padding: 10px 8px 2px;
@@ -501,8 +502,8 @@
     .section-panel { animation: appear 200ms ease-out; }
     .jobs-toolbar {
       display: grid;
-      grid-template-columns: minmax(260px, 1fr) minmax(170px, 0.55fr) minmax(260px, 1fr);
-      grid-template-areas: "search sort" "count sort";
+      grid-template-columns: minmax(240px, 1fr) minmax(220px, 1fr) minmax(220px, 0.8fr);
+      grid-template-areas: "search domain sort" "count count sort";
       align-items: end;
       gap: 18px;
       margin: 20px 0;
@@ -517,6 +518,7 @@
     }
     .jobs-search { display: grid; gap: 5px; min-width: 0; width: min(100%, 360px); }
     .jobs-search-filter { grid-area: search; justify-self: start; }
+    .jobs-search-domain { grid-area: domain; justify-self: start; }
     .jobs-search-sort { grid-area: sort; justify-self: end; align-self: start; }
     .jobs-search label { color: #344157; font-size: 0.85rem; font-weight: 700; }
     .jobs-search input {
@@ -579,7 +581,7 @@
     }
     .job-card {
       display: flex;
-      min-height: 160px;
+      min-height: 176px;
       flex-direction: column;
       align-items: flex-start;
       gap: 10px;
@@ -609,21 +611,84 @@
       color: #eaf1ff;
       font-size: 0.79rem;
     }
+    .job-card-salaries { width: 100%; color: #dbeafe; font-size: 0.76rem; }
+    .dynamic-chart svg { display: block; width: 100%; height: auto; overflow: visible; }
     .job-empty { grid-column: 1 / -1; padding: 24px; border: 1px dashed var(--line); border-radius: 14px; color: var(--muted); text-align: center; }
     .job-group + .job-group { margin-top: 26px; }
     .job-groups { display: block; }
     .job-group { display: block; width: 100%; }
-    .job-group h3 {
-      position: relative;
-      margin: 0 0 18px;
-      padding: 0 0 9px;
-      border-bottom: 3px solid var(--domain-color, #2563eb);
+    .job-group summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-left: 4px solid var(--domain-color, #2563eb);
+      border-radius: 12px;
+      background: #fff;
       color: #26364f;
       font-size: 1.15rem;
+      font-weight: 750;
+      cursor: pointer;
+      list-style: none;
+    }
+    .job-group summary::-webkit-details-marker { display: none; }
+    .job-group summary::after {
+      flex: 0 0 auto;
+      width: 9px;
+      height: 9px;
+      transform: rotate(45deg);
+      border-right: 2px solid #64748b;
+      border-bottom: 2px solid #64748b;
+      content: "";
+      transition: transform 150ms ease;
+    }
+    .job-group[open] summary { border-radius: 12px 12px 0 0; }
+    .job-group[open] summary::after { transform: rotate(225deg); }
+    .job-group-count { margin-left: auto; color: var(--muted); font-size: 0.85rem; font-weight: 600; }
+    .job-group .job-grid { padding-top: 14px; }
+    .job-group summary:focus-visible {
+      outline: 3px solid #93c5fd;
+      outline-offset: 3px;
+    }
+    .job-subgroup { margin: 12px 0 0 14px; }
+    .job-subgroup summary {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 9px;
+      background: #f8fafc;
+      color: #344157;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      list-style: none;
+    }
+    .job-subgroup summary::-webkit-details-marker { display: none; }
+    .job-subgroup summary::before {
+      width: 7px;
+      height: 7px;
+      transform: rotate(45deg);
+      border-right: 2px solid #64748b;
+      border-bottom: 2px solid #64748b;
+      content: "";
+      transition: transform 150ms ease;
+    }
+    .job-subgroup[open] summary::before { transform: rotate(135deg); }
+    .job-subgroup-count { margin-left: auto; color: var(--muted); font-size: 0.8rem; font-weight: 600; }
+    .job-subgroup-code { color: var(--muted); font-size: 0.75rem; font-weight: 600; white-space: nowrap; }
+    .job-subgroup .job-grid { padding: 12px 0 0 16px; }
+    .job-subgroup summary:focus-visible {
+      outline: 3px solid #93c5fd;
+      outline-offset: 3px;
     }
     .job-group-marketing { --domain-color: #2563eb; }
     .job-group-digital { --domain-color: #0f9f8f; }
     .job-group-frontiere { --domain-color: #b65cdb; }
+    .job-group-autres { --domain-color: #64748b; }
     .detail-header {
       display: flex;
       align-items: center;
@@ -638,6 +703,16 @@
       color: #fff;
     }
     .detail-header h2 { margin: 0; color: #fff; }
+    .detail-description {
+      margin: 0 0 20px;
+      padding: 16px 20px;
+      border: 1px solid #bfdbfe;
+      border-radius: 14px;
+      background: #eff6ff;
+      color: #26364f;
+      font-size: 1rem;
+      line-height: 1.65;
+    }
     .back-link {
       padding: 9px 12px;
       border: 1px solid var(--line);
@@ -755,6 +830,38 @@
       text-decoration: underline;
       cursor: pointer;
     }
+    .chat-search {
+      display: grid;
+      gap: 7px;
+      padding: 0 clamp(16px, 4vw, 30px) 18px;
+      background: #fbfcfe;
+    }
+    .chat-search label { color: #344157; font-size: 0.85rem; font-weight: 700; }
+    .chat-search > div { display: flex; gap: 9px; }
+    .chat-search input {
+      min-width: 0;
+      flex: 1;
+      padding: 10px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 9px;
+      background: #fff;
+      color: var(--ink);
+      font: inherit;
+    }
+    .chat-result { display: grid; gap: 6px; width: 100%; }
+    .chat-result-button {
+      padding: 10px 12px;
+      border: 1px solid #bfdbfe;
+      border-radius: 10px;
+      background: #eff6ff;
+      color: #1e3a8a;
+      text-align: left;
+      font: inherit;
+      cursor: pointer;
+    }
+    .chat-result-button strong { display: block; }
+    .chat-result-button span { display: block; margin-top: 4px; color: #40516d; font-size: 0.82rem; }
+    .chat-result-description { line-height: 1.5; }
     .recommendation-list { display: grid; width: 100%; gap: 12px; }
     .recommendation-card { min-height: 0; width: 100%; }
     .recommendation-reason {
@@ -790,12 +897,13 @@
       .job-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .jobs-toolbar {
         grid-template-columns: 1fr 1fr;
-        grid-template-areas: "search sort" "count sort";
+        grid-template-areas: "search domain" "sort count";
         align-items: end;
         gap: 12px;
       }
       .jobs-toolbar > p { justify-self: start; margin: 0; transform: translateY(3px); }
       .jobs-search-sort { justify-self: stretch; }
+      .jobs-search-domain { justify-self: stretch; }
       .jobs-search { width: 100%; }
     }
 
@@ -816,12 +924,13 @@
       .job-card { min-height: 132px; }
       .jobs-toolbar {
         grid-template-columns: 1fr 1fr;
-        grid-template-areas: "search sort" "count sort";
+        grid-template-areas: "search domain" "sort count";
         align-items: end;
         gap: 12px;
       }
       .jobs-toolbar > p { justify-self: start; margin: 0; transform: translateY(3px); }
       .jobs-search-sort { justify-self: stretch; }
+      .jobs-search-domain { justify-self: stretch; }
       .jobs-search { width: 100%; }
       .detail-header { align-items: flex-start; flex-direction: column; }
       .metric { min-height: 100px; padding: 14px; }
@@ -846,7 +955,6 @@
       <button class="tab" type="button" aria-current="page" data-main-page="home">Accueil</button>
       <button class="tab" type="button" data-main-page="jobs">Toutes nos offres</button>
       <button class="tab" type="button" data-main-page="assistant">Assistant d’orientation</button>
-      <button class="tab tab-work" type="button" data-main-page="more">D’autres offres d’emploi <span class="work-badge">🚧 En travaux</span></button>
       <button class="tab tab-work" type="button" data-main-page="about">Qui sommes-nous ? <span class="work-badge">🚧 En travaux</span></button>
     </nav>
 
@@ -872,6 +980,7 @@
       <div class="guide">
         <p><strong>Explorer les métiers</strong><br>Ouvrez « Toutes nos offres », puis choisissez un métier pour consulter ses contrats et ses salaires.</p>
         <button class="primary-link" type="button" data-open-jobs>Voir tous les métiers&nbsp; →</button>
+        <button class="primary-link" type="button" data-open-global>Voir l’analyse consolidée&nbsp; →</button>
         <button class="primary-link" type="button" data-open-assistant>Trouver une piste&nbsp; →</button>
       </div>
     </section>
@@ -883,8 +992,12 @@
         <div class="jobs-toolbar">
           <p id="jobs-count" aria-live="polite">Chargement des métiers…</p>
           <div class="jobs-search jobs-search-filter">
-            <label for="jobs-filter">Rechercher</label>
+            <label for="jobs-filter">Métier ou code ROME</label>
             <input id="jobs-filter" type="search" placeholder="Nom ou code ROME">
+          </div>
+          <div class="jobs-search jobs-search-domain">
+            <label for="domain-filter">Domaine professionnel ROME</label>
+            <div class="select-wrap"><select id="domain-filter"><option value="">Tous les domaines</option></select></div>
           </div>
           <div class="jobs-search jobs-search-sort">
             <label for="jobs-sort">Trier par</label>
@@ -909,10 +1022,14 @@
       <article class="orientation-card">
         <header class="orientation-heading">
           <h2>Assistant d’orientation</h2>
-          <p>Quelques questions pour faire émerger des métiers qui pourraient vous correspondre.</p>
-          <small class="orientation-disclaimer">Assistant guidé : les suggestions s’appuient sur vos choix et les métiers présents dans l’observatoire. Aucune réponse n’est envoyée à un service externe ; ce n’est pas une IA générative ni un bilan professionnel.</small>
+          <p>Recherchez un métier ou un code ROME dans tout le référentiel actif, ou laissez-vous guider pour explorer des pistes.</p>
+          <small class="orientation-disclaimer">L’assistant s’appuie sur les offres et indicateurs des fiches ROME de cet observatoire. La recherche est locale, sans envoi de votre texte à un service externe.</small>
         </header>
         <div class="chat-messages" id="orientation-messages" role="log" aria-live="polite" aria-relevant="additions"></div>
+        <form class="chat-search" id="chatbot-search">
+          <label for="chatbot-question">Quel métier ou domaine voulez-vous explorer ?</label>
+          <div><input id="chatbot-question" type="search" placeholder="Ex. infirmier, mécanicien, M1805" autocomplete="off"><button class="primary-link" type="submit">Rechercher</button></div>
+        </form>
         <div class="chat-choices" id="orientation-choices" aria-label="Réponses possibles"></div>
         <button class="chat-restart" id="orientation-restart" type="button" hidden>Recommencer</button>
       </article>
@@ -926,6 +1043,7 @@
           <p class="detail-meta" id="detail-meta"></p>
         </div>
       </div>
+      <p class="detail-description" id="detail-description" hidden></p>
       <div class="kpis" id="detail-kpis" aria-label="Indicateurs du métier"></div>
       <p class="body-copy">Analyse statistique des offres issues de France Travail. Pour une fourchette de salaire, les calculs retiennent son milieu ; l’équivalent mensuel affiché correspond au brut annuel divisé par 12.</p>
       <div class="detail-subnav" role="tablist" aria-label="Analyses du métier sélectionné">
@@ -938,6 +1056,7 @@
           <p class="section-lead" id="contracts-lead"></p>
           <figure>
             <img id="contracts-chart" alt="">
+            <div class="dynamic-chart" id="contracts-dynamic-chart" hidden></div>
             <figcaption id="contracts-caption"></figcaption>
           </figure>
           <div class="kpis" id="contracts-kpis" aria-label="Chiffres clés des contrats"></div>
@@ -950,11 +1069,13 @@
           <p class="section-lead" id="salary-lead"></p>
           <figure>
             <img id="salary-chart" alt="">
+            <div class="dynamic-chart" id="salary-dynamic-chart" hidden></div>
             <figcaption id="salary-caption"></figcaption>
             <div class="salary-calculation" id="salary-calculation" aria-label="Calcul de la moyenne et de la médiane"></div>
           </figure>
-          <figure>
+          <figure id="normal-figure">
             <img id="normal-chart" alt="">
+            <div class="dynamic-chart" id="normal-dynamic-chart" hidden></div>
             <figcaption id="normal-caption"></figcaption>
           </figure>
           <div class="analysis" id="salary-stats"></div>
@@ -962,10 +1083,6 @@
           <p class="note" id="salary-caveat"></p>
         </article>
       </section>
-    </section>
-
-    <section class="section-panel" id="page-more" hidden>
-      <div class="construction-card"><div class="construction-content"><span class="construction-icon" aria-hidden="true">🚧</span><h2>D’autres offres d’emploi</h2><p>Section en cours de construction - Analyse statistique à venir</p></div></div>
     </section>
 
     <section class="section-panel" id="page-about" hidden>
@@ -983,26 +1100,29 @@
       const jobsCount = document.querySelector("#jobs-count");
       const search = document.querySelector("#jobs-filter");
       const sortSelect = document.querySelector("#jobs-sort");
+      const domainSelect = document.querySelector("#domain-filter");
+      const chatbotSearch = document.querySelector("#chatbot-search");
+      const chatbotQuestion = document.querySelector("#chatbot-question");
+      const orientationMessages = document.querySelector("#orientation-messages");
       const pages = Array.from(document.querySelectorAll(".section-panel"));
       const navButtons = Array.from(document.querySelectorAll("[data-main-page]"));
       const mainNavigation = document.querySelector(".tabs");
       const jobs = new Map();
-      const domains = [
-        { name: "Marketing", codes: ["M1718", "M1716", "M1705", "M1703", "M1620", "M1706", "M1430", "M1711"] },
-        { name: "Digital", codes: ["E1113", "D1438", "E1101", "E1124", "E1405", "M1886", "M1426", "E1406"] },
-        { name: "Frontière", codes: ["M1719", "E1112", "E1103", "E1107", "E1404", "D1506", "D1415"] }
-      ];
-      const domainByCode = new Map(domains.flatMap((domain) =>
-        domain.codes.map((code) => [code, domain.name])
-      ));
-      const orientationTaskCodes = {
-        create: ["E1101", "E1124", "E1112", "E1103", "M1719", "E1107", "E1404"],
-        analyze: ["M1430", "M1705", "M1703", "D1415", "E1405", "M1426"],
-        organize: ["M1886", "E1107", "M1620", "D1438", "E1113", "M1703"],
-        advise: ["M1711", "M1716", "M1426", "M1705", "M1703"],
-        sell: ["M1706", "D1506", "M1430", "E1113", "D1438", "D1415"]
+      const initialJobCodes = new Set([
+        "M1718", "M1716", "M1705", "M1703", "M1620", "M1706", "M1430", "M1711",
+        "E1113", "D1438", "E1101", "E1124", "E1405", "M1886", "M1426", "M1719",
+        "E1406", "E1112", "E1103", "E1107", "E1404", "D1506", "D1415"
+      ]);
+      let domains = [];
+      const orientationTaskKeywords = {
+        create: ["communication", "contenu", "media", "spectacle", "art", "graphiste", "journaliste", "design"],
+        analyze: ["analyste", "étude", "controle", "diagnostic", "qualite", "recherche", "comptable", "statistique"],
+        organize: ["responsable", "coordinateur", "chef", "logistique", "planning", "gestionnaire", "projet"],
+        advise: ["conseiller", "consultant", "formateur", "accompagnement", "psychologue", "orientation"],
+        sell: ["vente", "commercial", "vendeur", "commerce", "client", "negociateur", "achat"]
       };
       const orientationState = { domain: null, task: null };
+      let chatbotConfig = null;
       let activeJob = null;
       let previousScrollY = window.scrollY;
 
@@ -1029,17 +1149,20 @@
 
       function sortJobs(items) {
         const [criterion, direction] = sortSelect.value.split("-");
-        if (criterion === "default") return items;
+        if (criterion === "default") {
+          const rank = new Map(domains.map((domain, index) => [domain.code, index]));
+          return items.slice().sort((left, right) =>
+            (rank.get(left.domaine) ?? domains.length) - (rank.get(right.domaine) ?? domains.length) ||
+            left.nom.localeCompare(right.nom, "fr") ||
+            left.code.localeCompare(right.code)
+          );
+        }
         const sign = direction === "asc" ? 1 : -1;
         return items.slice().sort((left, right) => {
           const metric = (job) => {
-            if (criterion === "offers") return job.stats.total_offres;
-            if (criterion === "cdi") {
-              if (!job.stats.total_offres) return null;
-              const cdi = (job.stats.contrats || []).find((contract) => contract.code === "CDI")?.effectif || 0;
-              return cdi / job.stats.total_offres * 100;
-            }
-            return job.stats.salaires.mean;
+            if (criterion === "offers") return job.total_offres;
+            if (criterion === "cdi") return job.cdi_percentage;
+            return job.salary_mean;
           };
           const first = metric(left);
           const second = metric(right);
@@ -1060,23 +1183,6 @@
         container.append(card);
       }
 
-      function salaryValue(offer) {
-        const low = offer.smin;
-        const high = offer.smax;
-        if (low === null || low === undefined || low === "") return null;
-        const minimum = Number(low);
-        const maximum = high === null || high === undefined || high === "" ? null : Number(high);
-        if (!Number.isFinite(minimum) || (maximum !== null && !Number.isFinite(maximum))) return null;
-        return maximum === null ? minimum : (minimum + maximum) / 2;
-      }
-
-      function median(values) {
-        const sorted = values.slice().sort((a, b) => a - b);
-        if (!sorted.length) return null;
-        const middle = Math.floor(sorted.length / 2);
-        return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
-      }
-
       function setPage(pageName) {
         const page = document.querySelector(`#page-${pageName}`);
         if (!page) return;
@@ -1092,6 +1198,7 @@
         if (pageName === "assistant" && !document.querySelector("#orientation-messages").childElementCount) {
           startOrientation();
         }
+        if (pageName === "jobs" && jobs.size) renderCards();
       }
 
       function addChatMessage(text, fromUser = false) {
@@ -1118,38 +1225,43 @@
       function startOrientation() {
         orientationState.domain = null;
         orientationState.task = null;
-        document.querySelector("#orientation-messages").replaceChildren();
+        orientationMessages.replaceChildren();
         document.querySelector("#orientation-restart").hidden = false;
-        addChatMessage("Bonjour ! Je peux vous aider à explorer des pistes parmi les métiers de cet observatoire. Il n’y a pas de bonne ou de mauvaise réponse.");
+        addChatMessage(`Bonjour ! L’observatoire référence ${jobs.size - 1} métiers ROME actifs. Vous pouvez rechercher un métier ou un code dans le champ ci-dessous, ou parcourir les domaines officiels.`);
         askOrientationDomain();
       }
 
       function askOrientationDomain() {
-        addChatMessage("Quel domaine vous attire le plus ?");
+        addChatMessage("Si vous souhaitez une suggestion guidée, choisissez un grand domaine ROME ou explorez tout le référentiel.");
         showOrientationChoices([
-          { label: "Marketing et stratégie", value: "Marketing" },
-          { label: "Digital, web et données", value: "Digital" },
-          { label: "Communication et métiers transverses", value: "Frontière" },
-          { label: "Je ne sais pas encore", value: "all" }
-        ].map((answer) => ({
-          label: answer.label,
-          select: () => {
-            orientationState.domain = answer.value;
-            addChatMessage(answer.label, true);
-            askOrientationTask();
+          ...domains.map((domain) => ({
+            label: domain.name,
+            select: () => {
+              orientationState.domain = domain.code;
+              addChatMessage(domain.name, true);
+              askOrientationTask();
+            }
+          })),
+          {
+            label: "Explorer tous les domaines",
+            select: () => {
+              orientationState.domain = null;
+              addChatMessage("Tous les domaines", true);
+              askOrientationTask();
+            }
           }
-        })));
+        ]);
       }
 
       function askOrientationTask() {
         addChatMessage("Quel type d’activité vous ressemble le plus ?");
         showOrientationChoices([
-          { label: "Créer des contenus et communiquer", value: "create" },
-          { label: "Analyser et mesurer des résultats", value: "analyze" },
-          { label: "Organiser des projets et coordonner", value: "organize" },
-          { label: "Conseiller et définir une stratégie", value: "advise" },
-          { label: "Développer les ventes et convaincre", value: "sell" },
-          { label: "Je veux découvrir plusieurs possibilités", value: "any" }
+          { label: "Créer, fabriquer ou communiquer", value: "create" },
+          { label: "Analyser, contrôler ou rechercher", value: "analyze" },
+          { label: "Organiser et coordonner", value: "organize" },
+          { label: "Conseiller et accompagner", value: "advise" },
+          { label: "Vendre et négocier", value: "sell" },
+          { label: "Découvrir les métiers les plus recherchés", value: "any" }
         ].map((answer) => ({
           label: answer.label,
           select: () => {
@@ -1160,27 +1272,96 @@
         })));
       }
 
+      function normalizeSearch(value) {
+        return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+          .toLocaleLowerCase("fr").replace(/[^a-z0-9]+/g, " ").trim();
+      }
+
+      function addChatJobResults(results, intro) {
+        addChatMessage(intro);
+        if (!results.length) {
+          addChatMessage("Aucun métier ne correspond à cette recherche dans les offres actives. Essayez un autre intitulé, un synonyme ou un code ROME.");
+          return;
+        }
+        const list = document.createElement("div");
+        list.className = "chat-result";
+        results.forEach((job) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "chat-result-button";
+          const title = document.createElement("strong");
+          title.textContent = `${job.nom} · ROME ${job.code}`;
+          const description = document.createElement("span");
+          description.className = "chat-result-description";
+          description.textContent = job.description;
+          const metrics = document.createElement("span");
+          const domain = domains.find((item) => item.code === job.domaine);
+          metrics.textContent = `${domain ? domain.name : "Domaine ROME"} · ${job.total_offres.toLocaleString("fr-FR")} offres · ${percent(job.cdi_percentage)} CDI · Moy. ${euro(job.salary_mean)} · Méd. ${euro(job.salary_median)}`;
+          button.append(title, description, metrics);
+          button.addEventListener("click", () => openJob(job.code));
+          list.append(button);
+        });
+        const message = document.createElement("div");
+        message.className = "chat-message";
+        message.append(list);
+        orientationMessages.append(message);
+        message.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      }
+
+      function searchChatbot(query) {
+        const normalized = normalizeSearch(query);
+        if (!normalized) {
+          addChatJobResults([], "Saisissez un intitulé de métier ou un code ROME pour interroger le référentiel complet.");
+          return;
+        }
+        const tokens = normalized.split(/\s+/);
+        const matches = Array.from(jobs.values())
+          .filter((job) => job.code !== "TOTAL")
+          .map((job) => {
+            const name = normalizeSearch(job.nom);
+            const code = normalizeSearch(job.code);
+            const combined = `${code} ${name}`;
+            if (!tokens.every((token) => combined.includes(token))) return null;
+            const score = (code === normalized ? 1000 : 0) +
+              (name === normalized ? 500 : 0) +
+              (name.startsWith(normalized) ? 200 : 0) +
+              (name.includes(normalized) ? 100 : 0) +
+              tokens.length * 10;
+            return { job, score };
+          })
+          .filter(Boolean)
+          .sort((left, right) =>
+            right.score - left.score ||
+            right.job.total_offres - left.job.total_offres ||
+            left.job.nom.localeCompare(right.job.nom, "fr")
+          )
+          .slice(0, 6)
+          .map((match) => match.job);
+        addChatJobResults(matches, `Résultats pour « ${query.trim()} » dans ${chatbotConfig.total_metiers_actifs.toLocaleString("fr-FR")} métiers ROME actifs :`);
+      }
+
       function showOrientationResults() {
-        const taskCodes = orientationTaskCodes[orientationState.task] || [];
-        const ranked = Array.from(jobs.values()).map((job) => {
+        const keywords = (orientationTaskKeywords[orientationState.task] || []).map(normalizeSearch);
+        const ranked = Array.from(jobs.values()).filter((job) => job.code !== "TOTAL").map((job) => {
           let score = 0;
           const reasons = [];
-          if (orientationState.domain && orientationState.domain !== "all" &&
-              domainByCode.get(job.code) === orientationState.domain) {
+          const name = normalizeSearch(job.nom);
+          if (orientationState.domain && job.domaine === orientationState.domain) {
             score += 3;
-            reasons.push(`rattaché au domaine ${orientationState.domain}`);
+            reasons.push(`rattaché au domaine ${domains.find((domain) => domain.code === orientationState.domain)?.name}`);
           }
-          if (taskCodes.includes(job.code)) {
-            score += 2;
+          const matchingKeywords = keywords.filter((keyword) => name.includes(keyword));
+          if (matchingKeywords.length) {
+            score += matchingKeywords.length * 2;
             reasons.push("en lien avec l’activité choisie");
           }
           return { job, score, reasons };
         }).sort((left, right) =>
           right.score - left.score ||
-          right.job.stats.total_offres - left.job.stats.total_offres ||
+          right.job.total_offres - left.job.total_offres ||
           left.job.nom.localeCompare(right.job.nom, "fr")
         );
-        const recommendations = ranked.slice(0, 3);
+        const recommendations = ranked.slice(0, 5);
         addChatMessage("Voici quelques métiers à explorer en priorité. Ce sont des pistes, pas un verdict : vous pouvez ouvrir chaque fiche pour voir les offres, les contrats et les salaires.");
         const container = document.createElement("div");
         container.className = "recommendation-list";
@@ -1190,7 +1371,8 @@
           button.className = "job-card recommendation-card";
           const code = document.createElement("span");
           code.className = "job-code";
-          code.textContent = `ROME ${job.code} · ${domainByCode.get(job.code) || "Autre métier"}`;
+          const domain = domains.find((item) => item.code === job.domaine);
+          code.textContent = `ROME ${job.code} · ${domain ? domain.name : "Domaine ROME"}`;
           const name = document.createElement("span");
           name.className = "job-name";
           name.textContent = job.nom;
@@ -1201,7 +1383,7 @@
             : "Une piste à découvrir parmi les métiers de l’observatoire.";
           const action = document.createElement("span");
           action.className = "recommendation-action";
-          action.textContent = `${job.stats.total_offres} offre${job.stats.total_offres === 1 ? "" : "s"} · Voir l’analyse →`;
+          action.textContent = `${job.total_offres.toLocaleString("fr-FR")} offres · ${percent(job.cdi_percentage)} CDI · Moy. ${euro(job.salary_mean)} · Méd. ${euro(job.salary_median)} · Ouvrir la fiche →`;
           button.append(code, name, reason, action);
           button.addEventListener("click", () => openJob(job.code));
           container.append(button);
@@ -1209,7 +1391,7 @@
         const message = document.createElement("div");
         message.className = "chat-message";
         message.append(container);
-        document.querySelector("#orientation-messages").append(message);
+        orientationMessages.append(message);
         message.scrollIntoView({ block: "nearest", behavior: "smooth" });
         showOrientationChoices([
           { label: "Modifier mes réponses", select: startOrientation },
@@ -1234,13 +1416,16 @@
         }
       }
 
-      function renderCards(query = "") {
-        const normalized = query.trim().toLocaleLowerCase("fr");
-        const visible = Array.from(jobs.values()).filter((job) =>
-          `${job.code} ${job.nom}`.toLocaleLowerCase("fr").includes(normalized)
-        );
+      function renderCards() {
+        const normalized = normalizeSearch(search.value);
+        const selectedDomain = domainSelect.value;
+        const visible = Array.from(jobs.values())
+          .filter((job) => job.code !== "TOTAL")
+          .filter((job) => !selectedDomain || job.domaine === selectedDomain)
+          .filter((job) => !normalized || normalizeSearch(`${job.code} ${job.nom}`).includes(normalized));
+        const sorted = sortJobs(visible);
         jobsContainer.replaceChildren();
-        jobsCount.textContent = `${visible.length} métier${visible.length === 1 ? "" : "s"} disponible${visible.length === 1 ? "" : "s"}`;
+        jobsCount.textContent = `${visible.length.toLocaleString("fr-FR")} métier${visible.length === 1 ? "" : "s"} trouvé${visible.length === 1 ? "" : "s"}`;
         if (!visible.length) {
           const empty = document.createElement("p");
           empty.className = "job-empty";
@@ -1249,86 +1434,350 @@
           return;
         }
         domains.forEach((domain) => {
-          const members = sortJobs(visible.filter((job) => domainByCode.get(job.code) === domain.name));
+          const members = sorted.filter((job) => job.domaine === domain.code);
           if (!members.length) return;
-          const group = document.createElement("section");
-          group.className = `job-group job-group-${domain.name === "Frontière" ? "frontiere" : domain.name.toLocaleLowerCase("fr")}`;
-          const heading = document.createElement("h3");
-          heading.textContent = domain.name;
-          const grid = document.createElement("div");
-          grid.className = "job-grid";
+          const group = document.createElement("details");
+          group.className = `job-group job-group-rome-${domain.code.toLowerCase()}`;
+          group.open = Boolean(normalized || selectedDomain);
+          const heading = document.createElement("summary");
+          const label = document.createElement("span");
+          label.textContent = domain.name;
+          const count = document.createElement("span");
+          count.className = "job-group-count";
+          const domainTotal = visible.filter((job) => job.domaine === domain.code).length;
+          count.textContent = `${domainTotal.toLocaleString("fr-FR")} métier${domainTotal === 1 ? "" : "s"}`;
+          heading.append(label, count);
+          const families = new Map();
           members.forEach((job) => {
-            const button = document.createElement("button");
-            button.type = "button";
-            button.className = "job-card";
-            button.setAttribute("aria-label", `Ouvrir ${job.nom}, code ROME ${job.code}, ${job.stats.total_offres} offres`);
-            const code = document.createElement("span");
-            code.className = "job-code";
-            code.textContent = `ROME ${job.code}`;
-            const name = document.createElement("span");
-            name.className = "job-name";
-            name.textContent = job.nom;
-            const footerLine = document.createElement("span");
-            footerLine.className = "job-card-bottom";
-            const count = document.createElement("span");
-            count.textContent = `${job.stats.total_offres} offre${job.stats.total_offres === 1 ? "" : "s"}`;
-            const cdi = (job.stats.contrats || []).find((contract) => contract.code === "CDI");
-            const rate = document.createElement("span");
-            rate.textContent = cdi ? `${percent(cdi.pourcentage)} CDI` : "CDI non renseigné";
-            footerLine.append(count, rate);
-            button.append(code, name, footerLine);
-            button.addEventListener("click", () => openJob(job.code));
-            grid.append(button);
+            const familyCode = job.code.slice(0, 3);
+            if (!families.has(familyCode)) families.set(familyCode, []);
+            families.get(familyCode).push(job);
           });
-          group.append(heading, grid);
+          Array.from(families.keys()).sort().forEach((familyCode) => {
+            const familyJobs = families.get(familyCode);
+            const subgroup = document.createElement("details");
+            subgroup.className = "job-subgroup";
+            subgroup.open = Boolean(normalized);
+            const subheading = document.createElement("summary");
+            const sublabel = document.createElement("span");
+            sublabel.textContent = familyJobs[0].famille;
+            const subcode = document.createElement("span");
+            subcode.className = "job-subgroup-code";
+            subcode.textContent = `ROME ${familyCode}`;
+            const subcount = document.createElement("span");
+            subcount.className = "job-subgroup-count";
+            subcount.textContent = `${familyJobs.length.toLocaleString("fr-FR")} métier${familyJobs.length === 1 ? "" : "s"}`;
+            subheading.append(sublabel, subcode, subcount);
+            const grid = document.createElement("div");
+            grid.className = "job-grid";
+            familyJobs.forEach((job) => {
+              const button = document.createElement("button");
+              button.type = "button";
+              button.className = "job-card";
+              button.dataset.jobCode = job.code;
+              button.setAttribute("aria-label", `Ouvrir ${job.nom}, code ROME ${job.code}, ${job.total_offres} offres`);
+              const code = document.createElement("span");
+              code.className = "job-code";
+              code.textContent = `ROME ${job.code}`;
+              const name = document.createElement("span");
+              name.className = "job-name";
+              name.textContent = job.nom;
+              const footerLine = document.createElement("span");
+              footerLine.className = "job-card-bottom";
+              const count = document.createElement("span");
+              count.textContent = `${job.total_offres.toLocaleString("fr-FR")} offre${job.total_offres === 1 ? "" : "s"}`;
+              const rate = document.createElement("span");
+              rate.textContent = `${percent(job.cdi_percentage)} CDI`;
+              footerLine.append(count, rate);
+              const salaries = document.createElement("span");
+              salaries.className = "job-card-salaries";
+              salaries.textContent = `Moy. ${euro(job.salary_mean)} · Méd. ${euro(job.salary_median)}`;
+              button.append(code, name, footerLine, salaries);
+              grid.append(button);
+            });
+            subgroup.append(subheading, grid);
+            group.append(subgroup);
+          });
+          group.prepend(heading);
           jobsContainer.append(group);
         });
       }
 
-      function updateGlobalMetrics() {
-        const entries = Array.from(jobs.values());
-        const totalOffers = entries.reduce((total, job) => total + job.stats.total_offres, 0);
-        const cdiOffers = entries.reduce((total, job) => total + (
-          (job.stats.contrats || []).find((contract) => contract.code === "CDI")?.effectif || 0
-        ), 0);
-        const salaryValues = entries.flatMap((job) =>
-          job.resume.offres.map(salaryValue).filter((value) => value !== null)
-        );
-        const salaryMean = salaryValues.length
-          ? salaryValues.reduce((sum, value) => sum + value, 0) / salaryValues.length
-          : null;
-        const salaryShare = totalOffers ? salaryValues.length / totalOffers * 100 : 0;
-
+      function updateGlobalMetrics(stats) {
+        const totalOffers = stats.total_offres;
+        const salaryValues = stats.salaires;
+        const cdiOffers = (stats.contrats || []).find((contract) => contract.code === "CDI")?.effectif || 0;
+        const salaryShare = totalOffers ? salaryValues.count / totalOffers * 100 : 0;
         document.querySelector("#global-total").textContent =
           new Intl.NumberFormat("fr-FR").format(totalOffers);
         document.querySelector("#global-cdi").textContent =
           totalOffers ? percent(cdiOffers / totalOffers * 100) : "—";
-        appendSalaryValue(document.querySelector("#global-mean"), salaryMean);
-        appendSalaryValue(document.querySelector("#global-median"), median(salaryValues));
+        appendSalaryValue(document.querySelector("#global-mean"), salaryValues.mean);
+        appendSalaryValue(document.querySelector("#global-median"), salaryValues.median);
         document.querySelector("#global-salary-share").textContent = percent(salaryShare);
         document.querySelector("#global-salary-label").textContent =
-          `des offres indiquent un salaire (${salaryValues.length} sur ${totalOffers})`;
-        const dates = entries.map((job) => job.resume.date).filter(Boolean).sort();
-        const date = dates.at(-1) || "";
+          `des offres indiquent un salaire (${salaryValues.count.toLocaleString("fr-FR")} sur ${totalOffers.toLocaleString("fr-FR")})`;
+        const date = stats.source_date || "";
         document.querySelector("#hero-date").textContent = date;
-        const unclassified = entries.filter((job) => !domainByCode.has(job.code));
-        if (unclassified.length) {
-          status.dataset.state = "error";
-          status.textContent = `Des métiers n’ont pas de domaine attribué : ${unclassified.map((job) => job.code).join(", ")}.`;
-          status.hidden = false;
-        }
-        footer.textContent = `Données France Travail · ${totalOffers} offres recensées pour ${entries.length} métiers · Corpus observé le ${date}`;
+        footer.textContent = `Données France Travail · ${totalOffers.toLocaleString("fr-FR")} offres recensées · Corpus observé le ${date}`;
       }
 
-      function openJob(code, detailPage = "contracts") {
+      const svgNamespace = "http://www.w3.org/2000/svg";
+      function svgNode(name, attributes = {}, text = "") {
+        const node = document.createElementNS(svgNamespace, name);
+        Object.entries(attributes).forEach(([key, value]) => node.setAttribute(key, String(value)));
+        if (text) node.textContent = text;
+        return node;
+      }
+
+      function chartCanvas(container, label, height) {
+        container.replaceChildren();
+        const svg = svgNode("svg", {
+          viewBox: `0 0 900 ${height}`,
+          role: "img",
+          "aria-label": label
+        });
+        svg.append(svgNode("title", {}, label));
+        container.append(svg);
+        return svg;
+      }
+
+      function renderContractChart(container, stats) {
+        const rows = (stats.contrats || []).slice().reverse();
+        const height = Math.max(180, rows.length * 46 + 45);
+        const svg = chartCanvas(container, `Répartition des contrats pour ${stats.nom}`, height);
+        if (!rows.length) {
+          svg.append(svgNode("text", { x: 450, y: 100, "text-anchor": "middle", fill: "#64748b" }, "Aucune offre recensée"));
+          return;
+        }
+        const maximum = Math.max(...rows.map((row) => row.effectif), 1);
+        rows.forEach((row, index) => {
+          const y = 12 + index * 46;
+          const barWidth = row.effectif / maximum * 520;
+          svg.append(
+            svgNode("text", { x: 12, y: y + 23, fill: "#334155", "font-size": 15 }, row.nom || "Non renseigné"),
+            svgNode("rect", { x: 250, y: y + 5, width: 520, height: 26, rx: 6, fill: "#e2e8f0" }),
+            svgNode("rect", { x: 250, y: y + 5, width: barWidth, height: 26, rx: 6, fill: "#3978a8" }),
+            svgNode("text", { x: 785, y: y + 23, fill: "#334155", "font-size": 14 },
+              `${row.effectif.toLocaleString("fr-FR")} · ${percent(row.pourcentage)}`)
+          );
+        });
+      }
+
+      function renderSalaryChart(container, stats) {
+        const salaryStats = stats.salaires;
+        const bins = salaryStats.histogramme || [];
+        const svg = chartCanvas(container, `Histogramme des salaires annuels pour ${stats.nom}`, 520);
+        if (!bins.length) {
+          svg.append(svgNode("text", { x: 450, y: 230, "text-anchor": "middle", fill: "#64748b" }, "Aucun salaire renseigné"));
+          return;
+        }
+        const left = 105, top = 165, width = 745, baseline = 420, plotHeight = 235;
+        const maxCount = Math.max(...bins.map((bin) => bin.effectif), 1);
+        const barWidth = width / bins.length;
+        svg.append(
+          svgNode("text", { x: left, y: 34, fill: "#0f172a", "font-size": 22, "font-weight": 700 },
+            `Salaires bruts annuels — ${stats.code}`),
+          svgNode("text", { x: left, y: 64, fill: "#64748b", "font-size": 14 },
+            `${salaryStats.count.toLocaleString("fr-FR")} salaire${salaryStats.count === 1 ? "" : "s"} renseigné${salaryStats.count === 1 ? "" : "s"} · classes de 10 000 €`)
+        );
+        const legendItems = [
+          [salaryStats.mean, "#d97706", "Moyenne"],
+          [salaryStats.median, "#7c3aed", "Médiane"]
+        ].filter(([value]) => Number.isFinite(value));
+        const legendWidth = 250;
+        const legendStart = (900 - legendItems.length * legendWidth) / 2;
+        legendItems.forEach(([value, color, label], index) => {
+          const x = legendStart + index * legendWidth;
+          svg.append(
+            svgNode("line", { x1: x, y1: 112, x2: x + 28, y2: 112, stroke: color, "stroke-width": 3, "stroke-dasharray": "8 5" }),
+            svgNode("text", { x: x + 38, y: 117, fill: "#0f172a", "font-size": 15 },
+              `${label} : ${euro(value)}`)
+          );
+        });
+        [0, 0.25, 0.5, 0.75, 1].forEach((fraction) => {
+          const y = baseline - fraction * plotHeight;
+          const count = Math.round(maxCount * fraction);
+          svg.append(
+            svgNode("line", { x1: left, y1: y, x2: left + width, y2: y, stroke: "#dbe3ed", "stroke-width": 1 }),
+            svgNode("text", { x: left - 12, y: y + 5, fill: "#64748b", "font-size": 13, "text-anchor": "end" }, String(count))
+          );
+        });
+        bins.forEach((bin, index) => {
+          const barHeight = bin.effectif / maxCount * plotHeight;
+          const x = left + index * barWidth + 2;
+          const bar = svgNode("rect", {
+            x, y: baseline - barHeight, width: Math.max(1, barWidth - 4), height: barHeight,
+            fill: "#3978a8", stroke: "white", "stroke-width": 1
+          });
+          bar.append(svgNode("title", {}, `${euro(bin.debut)}–${euro(bin.fin)} : ${bin.effectif} offre(s)`));
+          svg.append(bar);
+        });
+        svg.append(
+          svgNode("line", { x1: left, y1: baseline, x2: left + width, y2: baseline, stroke: "#94a3b8" }),
+          svgNode("text", { x: 480, y: 500, fill: "#334155", "font-size": 15, "text-anchor": "middle" }, "Salaire brut annuel (€)"),
+          svgNode("text", {
+            x: 26, y: (top + baseline) / 2, fill: "#334155", "font-size": 15,
+            "text-anchor": "middle", transform: `rotate(-90 26 ${(top + baseline) / 2})`
+          }, "Nombre d’offres")
+        );
+        bins.forEach((bin, index) => {
+          const tickX = left + index / bins.length * width;
+          svg.append(
+            svgNode("line", { x1: tickX, y1: baseline, x2: tickX, y2: baseline + 5, stroke: "#64748b" }),
+            svgNode("text", {
+              x: tickX, y: baseline + 24, fill: "#64748b", "font-size": 11,
+              "text-anchor": index === 0 ? "start" : "middle"
+            }, `${Math.round(bin.debut / 1000)} k€`)
+          );
+        });
+        const lastTickX = left + width;
+        svg.append(svgNode("text", {
+          x: lastTickX, y: baseline + 24, fill: "#64748b", "font-size": 11, "text-anchor": "end"
+        }, `${Math.round(bins[bins.length - 1].fin / 1000)} k€`));
+        [
+          [salaryStats.mean, "#d97706"],
+          [salaryStats.median, "#7c3aed"]
+        ].forEach(([value, color]) => {
+          if (!Number.isFinite(value)) return;
+          const range = bins[bins.length - 1].fin - bins[0].debut;
+          const x = left + (range ? (value - bins[0].debut) / range : 0.5) * width;
+          svg.append(svgNode("line", {
+            x1: x, y1: top, x2: x, y2: baseline, stroke: color, "stroke-width": 2.5, "stroke-dasharray": "8 5"
+          }));
+        });
+      }
+
+      function renderNormalChart(container, stats) {
+        const salaries = stats.salaires;
+        const svg = chartCanvas(container, `Distribution théorique normale des salaires — ${stats.nom} (${stats.code})`, 600);
+        const mean = salaries.mean;
+        const deviation = salaries.std;
+        if (salaries.count < 2 || !Number.isFinite(mean) || !Number.isFinite(deviation) || deviation <= 0) {
+          svg.append(svgNode("text", {
+            x: 450, y: 300, "text-anchor": "middle", fill: "#64748b", "font-size": 18
+          }, salaries.count ? "Au moins deux salaires distincts sont nécessaires" : "Aucun salaire renseigné"));
+          return;
+        }
+
+        const left = 35, right = 865, top = 240, baseline = 520;
+        const start = mean - 3 * deviation;
+        const end = mean + 3 * deviation;
+        const x = (value) => left + (value - start) / (end - start) * (right - left);
+        const y = (z) => baseline - Math.exp(-0.5 * z * z) * 220;
+        const curvePoints = Array.from({ length: 241 }, (_, index) => {
+          const z = -3 + index / 40;
+          return { z, x: x(mean + z * deviation), y: y(z) };
+        });
+        const curvePath = curvePoints.map((point, index) =>
+          `${index ? "L" : "M"} ${point.x} ${point.y}`
+        ).join(" ");
+        const bandPoints = curvePoints.filter((point) => point.z >= -1 && point.z <= 1);
+        const bandPath = [
+          `M ${bandPoints[0].x} ${baseline}`,
+          ...bandPoints.map((point) => `L ${point.x} ${point.y}`),
+          `L ${bandPoints[bandPoints.length - 1].x} ${baseline}`,
+          "Z"
+        ].join(" ");
+
+        svg.append(
+          svgNode("text", { x: 10, y: 38, fill: "#0f172a", "font-size": 21, "font-weight": 700 },
+            `Distribution théorique normale des salaires — ${stats.nom} (${stats.code})`),
+          svgNode("text", { x: 10, y: 72, fill: "#64748b", "font-size": 15 },
+            `D'après les ${salaries.count.toLocaleString("fr-FR")} salaires renseignés sur ${stats.total_offres.toLocaleString("fr-FR")} offres : moyenne = ${euro(mean)} · écart-type = ${euro(deviation)}`)
+        );
+
+        const legend = [
+          { x: 30, label: "Entre μ − σ et μ + σ", kind: "band" },
+          { x: 260, label: `Moyenne = ${euro(mean)}`, kind: "mean" },
+          { x: 485, label: `Médiane = ${euro(salaries.median)}`, kind: "median" }
+        ];
+        legend.forEach((item) => {
+          if (item.kind === "band") {
+            svg.append(svgNode("rect", { x: item.x, y: 125, width: 26, height: 12, fill: "#93c5fd", opacity: 0.65 }));
+          } else {
+            svg.append(svgNode("line", {
+              x1: item.x, y1: 131, x2: item.x + 25, y2: 131,
+              stroke: item.kind === "mean" ? "#b91c1c" : "#7c3aed",
+              "stroke-width": 3,
+              "stroke-dasharray": item.kind === "mean" ? "8 5" : "2 5"
+            }));
+          }
+          svg.append(svgNode("text", { x: item.x + 34, y: 137, fill: "#0f172a", "font-size": 14 }, item.label));
+        });
+
+        svg.append(
+          svgNode("path", { d: bandPath, fill: "#60a5fa", opacity: 0.42 }),
+          svgNode("path", { d: curvePath, fill: "none", stroke: "#2563eb", "stroke-width": 3.5 }),
+          svgNode("line", { x1: left, y1: baseline, x2: right, y2: baseline, stroke: "#cbd5e1" })
+        );
+        [
+          { value: mean, label: "Moyenne", color: "#b91c1c", dash: "9 6" },
+          { value: salaries.median, label: "Médiane", color: "#7c3aed", dash: "2 6" }
+        ].forEach((line) => {
+          if (!Number.isFinite(line.value)) return;
+          const position = x(line.value);
+          svg.append(svgNode("line", {
+            x1: position, y1: top, x2: position, y2: baseline,
+            stroke: line.color, "stroke-width": 3, "stroke-dasharray": line.dash
+          }));
+        });
+        svg.append(svgNode("rect", { x: x(mean) - 45, y: 352, width: 90, height: 30, fill: "white", opacity: 0.85 }));
+        svg.append(svgNode("text", {
+          x: x(mean), y: 374, fill: "#1e3a8a", "font-size": 16, "font-weight": 700, "text-anchor": "middle"
+        }, "68,3 %"));
+
+        [
+          { value: mean - 2 * deviation, label: "μ − 2σ" },
+          { value: mean - deviation, label: "μ − σ" },
+          { value: mean, label: "Moyenne" },
+          { value: mean + deviation, label: "μ + σ" },
+          { value: mean + 2 * deviation, label: "μ + 2σ" }
+        ].forEach((tick) => {
+          const position = x(tick.value);
+          svg.append(
+            svgNode("line", { x1: position, y1: baseline, x2: position, y2: baseline + 5, stroke: "#64748b" }),
+            svgNode("text", { x: position, y: 548, fill: "#64748b", "font-size": 14, "text-anchor": "middle" }, tick.label)
+          );
+        });
+        svg.append(svgNode("text", {
+          x: 450, y: 584, fill: "#334155", "font-size": 15, "text-anchor": "middle"
+        }, "Salaire annuel (€)"));
+      }
+
+      async function chargerStatistiques(job) {
+        if (job.statsLoaded) return;
+        const response = await fetch(`data/${encodeURIComponent(job.code)}/stats.json`);
+        if (!response.ok) throw new Error(`HTTP ${response.status} lors du chargement des statistiques ${job.code}.`);
+        const stats = await response.json();
+        if (stats.code !== job.code || !stats.salaires || !Array.isArray(stats.contrats)) {
+          throw new Error(`Statistiques invalides pour le métier ${job.code}.`);
+        }
+        job.stats = stats;
+        job.statsLoaded = true;
+      }
+
+      async function openJob(code, detailPage = "contracts") {
         const job = jobs.get(code);
         if (!job) {
           status.textContent = `Les données du métier ${code} ne sont pas disponibles.`;
           status.hidden = false;
           return;
         }
+        status.dataset.state = "loading";
+        status.textContent = `Chargement de la fiche ${job.code}…`;
+        status.hidden = false;
+        try {
+          await chargerStatistiques(job);
+        } catch (error) {
+          status.dataset.state = "error";
+          status.textContent = error.message;
+          return;
+        }
+        status.hidden = true;
         activeJob = job;
-        const { stats, resume, nom } = job;
+        const { stats, nom } = job;
+        const resume = { date: job.date || stats.source_date };
         const salaryStats = stats.salaires;
         const total = stats.total_offres;
         const paid = salaryStats.count;
@@ -1341,7 +1790,13 @@
         );
 
         document.querySelector("#detail-title").textContent = nom;
-        document.querySelector("#detail-meta").textContent = `Code ROME ${code} · ${total} offre${total === 1 ? "" : "s"} · Données du ${resume.date || stats.source_date}`;
+        const description = document.querySelector("#detail-description");
+        description.textContent = job.description || "";
+        description.hidden = !job.description;
+        const codeLabel = code === "TOTAL"
+          ? "Tous codes ROME"
+            : `Code ROME ${code}`;
+        document.querySelector("#detail-meta").textContent = `${codeLabel} · ${total.toLocaleString("fr-FR")} offres · Données du ${resume.date || stats.source_date}`;
         const summary = document.querySelector("#detail-kpis");
         summary.replaceChildren();
         addMetric(summary, String(total), "offres analysées");
@@ -1367,8 +1822,30 @@
         document.querySelector("#contracts-lead").textContent =
           `Répartition des ${total} offres selon le type de contrat annoncé.`;
         const contractsChart = document.querySelector("#contracts-chart");
-        contractsChart.src = `data/${encodeURIComponent(code)}/contrats.png`;
-        contractsChart.alt = `Répartition des contrats pour ${nom} (${code}).`;
+        const contractsDynamicChart = document.querySelector("#contracts-dynamic-chart");
+        const salaryChart = document.querySelector("#salary-chart");
+        const salaryDynamicChart = document.querySelector("#salary-dynamic-chart");
+        const normalChart = document.querySelector("#normal-chart");
+        const normalDynamicChart = document.querySelector("#normal-dynamic-chart");
+        const staticCharts = initialJobCodes.has(code);
+        contractsChart.hidden = !staticCharts;
+        contractsDynamicChart.hidden = staticCharts;
+        salaryChart.hidden = staticCharts;
+        salaryDynamicChart.hidden = staticCharts;
+        normalChart.hidden = !staticCharts;
+        normalDynamicChart.hidden = staticCharts;
+        if (staticCharts) {
+          contractsChart.src = `data/${encodeURIComponent(code)}/contrats.png`;
+          contractsChart.alt = `Répartition des contrats pour ${nom} (${code}).`;
+          salaryChart.src = `data/${encodeURIComponent(code)}/salaires.png`;
+          salaryChart.alt = `Histogramme des salaires de ${nom} (${code}).`;
+          normalChart.src = `data/${encodeURIComponent(code)}/courbe_gauss_salaires.png`;
+          normalChart.alt = `Distribution normale théorique des salaires de ${nom} (${code}).`;
+        } else {
+          renderContractChart(contractsDynamicChart, stats);
+          renderSalaryChart(salaryDynamicChart, stats);
+          renderNormalChart(normalDynamicChart, stats);
+        }
         document.querySelector("#contracts-caption").textContent =
           `Types de contrats parmi les offres actives associées au code ROME ${code}.`;
         const contractKpis = document.querySelector("#contracts-kpis");
@@ -1388,9 +1865,6 @@
 
         document.querySelector("#salary-lead").textContent =
           `Salaires bruts annuels communiqués dans les offres ${code}.`;
-        const salaryChart = document.querySelector("#salary-chart");
-        salaryChart.src = `data/${encodeURIComponent(code)}/salaires.png`;
-        salaryChart.alt = `Histogramme des ${paid} salaires renseignés pour ${nom}.`;
         document.querySelector("#salary-caption").textContent = paid
           ? `Répartition des ${paid} salaires renseignés ; les lignes indiquent la moyenne et la médiane.`
           : "Aucune offre ne renseigne de salaire.";
@@ -1418,14 +1892,12 @@
           calculation.append(unavailable);
         }
 
-        const normalChart = document.querySelector("#normal-chart");
-        normalChart.src = `data/${encodeURIComponent(code)}/courbe_gauss_salaires.png`;
-        normalChart.alt = paid
-          ? `Courbe normale théorique des salaires de ${nom}, avec moyenne et médiane.`
-          : `Graphique indiquant qu’aucun salaire n’est disponible pour ${nom}.`;
         document.querySelector("#normal-caption").textContent = paid
-          ? `Courbe normale théorique calculée à partir des salaires renseignés pour le code ROME ${code}.`
-          : "Aucune courbe ne peut être estimée sans salaire renseigné.";
+          ? staticCharts
+            ? `Courbe normale théorique calculée à partir des salaires renseignés pour le code ROME ${code}.`
+            : "La zone bleue entre μ − σ et μ + σ représente 68,3 % d'une loi normale théorique ajustée aux salaires observés."
+          : "Aucun salaire renseigné.";
+        document.querySelector("#normal-explanation").hidden = !staticCharts;
 
         const salaryCards = document.querySelector("#salary-stats");
         salaryCards.replaceChildren();
@@ -1445,15 +1917,15 @@
         });
         const interval = salaryStats.mean_plus_minus_std;
         document.querySelector("#normal-explanation").textContent = interval
-          ? `Sur la courbe normale théorique, la zone bleue entre la moyenne moins un écart-type et la moyenne plus un écart-type, soit de ${euro(interval.lower)} (≈ ${euro(interval.lower / 12)}/mois) à ${euro(interval.upper)} (≈ ${euro(interval.upper / 12)}/mois), représente environ 68,3 % de la distribution modélisée.`
-          : "La courbe normale et son intervalle à un écart-type ne sont pas disponibles : il faut au moins deux salaires renseignés.";
+          ? `La zone bleue de la courbe normale théorique, entre la moyenne moins un écart-type et la moyenne plus un écart-type, va de ${euro(interval.lower)} à ${euro(interval.upper)}.`
+          : "La courbe de distribution n'est pas disponible : il faut au moins deux salaires distincts.";
         const caveat = document.querySelector("#salary-caveat");
         caveat.replaceChildren();
         const warning = document.createElement("strong");
         warning.textContent = "Limite importante : ";
         caveat.append(
           warning,
-          `seules ${paid} offres sur ${total} indiquent un salaire (${percent(rate)}). Les statistiques calculées sur les salaires publiés peuvent être affectées par le biais des données manquantes et ne pas représenter l’ensemble des offres. La zone de 68,3 %, lorsqu’elle est affichée, est une propriété théorique de la loi normale, pas une proportion mesurée dans les annonces.`
+          `seules ${paid} offres sur ${total} indiquent un salaire (${percent(rate)}). Les statistiques calculées sur les salaires publiés peuvent être affectées par le biais des données manquantes et ne pas représenter l’ensemble des offres.`
         );
         setPage("detail");
         showDetailPage(detailPage);
@@ -1464,36 +1936,56 @@
         status.textContent = "Chargement des offres et calcul des indicateurs globaux…";
         status.hidden = false;
         try {
-          const indexResponse = await fetch("data/metiers.json");
+          const [configResponse, indexResponse] = await Promise.all([
+            fetch("data/chatbot.json"),
+            fetch("data/metiers.json")
+          ]);
+          if (!configResponse.ok) throw new Error(`HTTP ${configResponse.status} lors du chargement de la configuration du chatbot.`);
           if (!indexResponse.ok) throw new Error(`HTTP ${indexResponse.status} lors du chargement de la liste.`);
+          chatbotConfig = await configResponse.json();
           const index = await indexResponse.json();
           if (!Array.isArray(index) || !index.length) throw new Error("L’index des métiers est vide.");
-          const loaded = await Promise.all(index.map(async (item) => {
-            if (!/^[A-Z][0-9]{4}$/.test(item.code) || !item.nom) {
-              throw new Error("L’index contient un métier avec un code ou un nom invalide.");
-            }
-            const base = `data/${encodeURIComponent(item.code)}/`;
-            const [resumeResponse, statsResponse] = await Promise.all([
-              fetch(`${base}resume.json`),
-              fetch(`${base}stats.json`)
-            ]);
-            if (!resumeResponse.ok || !statsResponse.ok) {
-              throw new Error(`Données indisponibles pour ${item.code} (HTTP ${resumeResponse.status}/${statsResponse.status}).`);
-            }
-            const [resume, stats] = await Promise.all([resumeResponse.json(), statsResponse.json()]);
-            if (stats.code !== item.code || !Array.isArray(resume.offres)) {
-              throw new Error(`Fichiers de données incomplets ou incohérents pour ${item.code}.`);
-            }
-            return { code: item.code, nom: item.nom, resume, stats };
+          if (chatbotConfig.knowledge_base !== "data/metiers.json" ||
+              chatbotConfig.total_metiers_actifs !== index.length ||
+              !Array.isArray(chatbotConfig.domaines)) {
+            throw new Error("La configuration du chatbot ne correspond pas au référentiel des métiers.");
+          }
+          domains = chatbotConfig.domaines.map((domain) => ({
+            code: domain.code,
+            name: domain.libelle
           }));
-          loaded.forEach((job) => jobs.set(job.code, job));
-          updateGlobalMetrics();
-          renderCards();
+          if (domains.length !== 14) throw new Error("Le référentiel ROME doit exposer ses 14 domaines officiels.");
+          domainSelect.replaceChildren(new Option("Tous les domaines", ""));
+          domains.forEach((domain) => {
+            const option = new Option(domain.name, domain.code);
+            domainSelect.append(option);
+          });
+          index.forEach((item) => {
+            if (!/^[A-N][0-9]{4}$/.test(item.code) || !item.nom || !item.description ||
+                item.famille_code !== item.code.slice(0, 3) || !item.famille ||
+                !Number.isFinite(item.total_offres) || !Number.isFinite(item.cdi_percentage) ||
+                !domains.some((domain) => domain.code === item.domaine)) {
+              throw new Error("L’index contient un métier avec un code, un nom, des indicateurs ou un domaine invalide.");
+            }
+            jobs.set(item.code, { ...item, statsLoaded: false });
+          });
+          const totalResponse = await fetch("data/TOTAL/stats.json");
+          if (!totalResponse.ok) throw new Error(`HTTP ${totalResponse.status} lors du chargement des statistiques consolidées.`);
+          const totalStats = await totalResponse.json();
+          if (totalStats.code !== "TOTAL") throw new Error("Les statistiques consolidées ne correspondent pas au code TOTAL.");
+          jobs.set("TOTAL", {
+            code: "TOTAL",
+            nom: "Ensemble des offres",
+            date: totalStats.source_date,
+            stats: totalStats,
+            statsLoaded: true
+          });
+          updateGlobalMetrics(totalStats);
           status.hidden = true;
           status.textContent = "";
           const [route, code, subpage] = window.location.hash.slice(1).split("/");
           if (route === "metier" && jobs.has(code)) openJob(code, subpage === "salaries" ? "salaries" : "contracts");
-          else setPage(route === "jobs" || route === "assistant" || route === "more" || route === "about" ? route : "home");
+          else setPage(route === "jobs" || route === "assistant" || route === "about" ? route : "home");
         } catch (error) {
           status.dataset.state = "error";
           status.textContent = `Impossible de charger les données du site. Vérifiez que le serveur web est actif et que les fichiers de data/ sont présents. Détail : ${error.message}`;
@@ -1504,6 +1996,10 @@
 
       navButtons.forEach((button) => {
         button.addEventListener("click", () => setPage(button.dataset.mainPage));
+      });
+      jobsContainer.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-job-code]");
+        if (button) openJob(button.dataset.jobCode);
       });
       window.addEventListener("scroll", () => {
         const currentScrollY = window.scrollY;
@@ -1518,9 +2014,17 @@
         }
       }, { passive: true });
       document.querySelector("[data-open-jobs]").addEventListener("click", () => setPage("jobs"));
+      document.querySelector("[data-open-global]").addEventListener("click", () => openJob("TOTAL"));
       document.querySelector("[data-open-assistant]").addEventListener("click", () => setPage("assistant"));
       document.querySelector("[data-back-to-jobs]").addEventListener("click", () => setPage("jobs"));
       document.querySelector("#orientation-restart").addEventListener("click", startOrientation);
+      chatbotSearch.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const query = chatbotQuestion.value.trim();
+        if (!query) return;
+        addChatMessage(query, true);
+        searchChatbot(query);
+      });
       document.querySelectorAll(".detail-tab").forEach((tab, index, tabs) => {
         tab.addEventListener("click", () => showDetailPage(tab.dataset.detailPage));
         tab.addEventListener("keydown", (event) => {
@@ -1533,8 +2037,9 @@
           showDetailPage(tabs[next].dataset.detailPage);
         });
       });
-      search.addEventListener("input", () => renderCards(search.value));
-      sortSelect.addEventListener("change", () => renderCards(search.value));
+      search.addEventListener("input", renderCards);
+      domainSelect.addEventListener("change", renderCards);
+      sortSelect.addEventListener("change", renderCards);
       initialize();
     })();
   </script>

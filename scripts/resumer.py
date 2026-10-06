@@ -2,21 +2,24 @@ r"""Lit les offres actives du jour (data/actives/<date>.csv), retrouve leur dern
 data/brut, et écrit data/resume.json : le fichier que la page index.html affiche.
 
 Usage :
-    .venv\Scripts\python.exe scripts\resumer.py
+    python3 scripts/resumer.py
+    python3 scripts/resumer.py --geocoder  # complète les coordonnées via geo.api.gouv.fr
 
 C'est ici que la donnée brute est retravaillée :
   - salaire : libellé texte -> minimum et maximum annuels bruts ;
   - outils cités dans l'intitulé + la description (grille OUTILS, à adapter à votre métier) ;
   - position sur la carte : latitude/longitude de l'API quand elle les donne, sinon le centre
-    de la commune (geo.api.gouv.fr, mis en cache dans data/geo/), sinon la ville principale
-    du département ; les offres « France » n'ont pas de point.
+    de la commune/département présent dans le cache data/geo/. Le géocodage des lieux absents
+    du cache est activable avec --geocoder ; les offres « France » peuvent rester sans point.
   - niveau de poste déduit de l'intitulé (assistant / chargé / responsable / directeur / autre),
     nature du contrat (apprentissage, professionnalisation, salarié, non salarié) et libellés
     lisibles des codes de contrat (clé « contrats » du résumé).
   - exigences : exp_exige, exp_ans (années, 0 = débutant accepté), qualification, formation
     (niveau le plus élevé demandé), secteur, temps (plein/partiel), postes.
-La page recalcule ensuite tous les comptages côté navigateur, selon les métiers cochés.
+Le script produit un index léger, des statistiques compactes par code ROME et un résumé global.
+Les graphiques des fiches sont dessinés en SVG côté navigateur à l'ouverture d'une fiche.
 """
+import argparse
 import csv
 import json
 import re
@@ -29,7 +32,20 @@ import requests
 
 RACINE = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(RACINE / "scripts"))
-from extraire import METIERS  # noqa: E402  (la liste des métiers vit dans un seul fichier)
+from extraire import METIERS, ROME_METIERS  # noqa: E402  (les référentiels vivent dans un seul fichier)
+from graphiques_resume import ecrire_analyse  # noqa: E402
+
+ROME_REFERENTIEL = json.loads(
+    (RACINE / "data" / "metiers_rome.json").read_text(encoding="utf-8")
+)["metiers"]
+ROME_FAMILLES = {
+    entree["famille_code"]: (entree["famille_code"], entree["famille"])
+    for entree in ROME_REFERENTIEL
+}
+ROME_DESCRIPTIONS = {
+    entree["code"]: entree.get("description", "").strip()
+    for entree in ROME_REFERENTIEL
+}
 
 # Les outils et compétences que l'on cherche dans les annonces : c'est VOTRE grille, adaptez-la.
 # Chaque entrée : libellé affiché -> variantes cherchées (mot entier, insensible à la casse).
@@ -103,6 +119,46 @@ NATURES = [
 
 # Niveau de formation demandé : du plus faible au plus élevé (l'ordre sert aussi à l'affichage).
 FORMATIONS = ["< Bac", "Bac", "Bac+2", "Bac+3/4", "Bac+5"]
+
+# Domaines professionnels ROME 4.0 (première lettre du code ROME).
+DOMAINES_ROME = {
+    "A": "Agriculture et pêche, espaces naturels et espaces verts, soins aux animaux",
+    "B": "Arts et façonnage d'ouvrages d'art",
+    "C": "Banque, assurance, immobilier",
+    "D": "Commerce, vente et grande distribution",
+    "E": "Communication, media et multimédia",
+    "F": "Construction, bâtiment et travaux publics",
+    "G": "Hôtellerie-restauration, tourisme, loisirs et animation",
+    "H": "Industrie",
+    "I": "Installation et maintenance",
+    "J": "Santé",
+    "K": "Services à la personne et à la collectivité",
+    "L": "Spectacle",
+    "M": "Support à l'entreprise",
+    "N": "Transport et logistique",
+}
+
+
+def domaine_rome(code):
+    lettre = code[0]
+    try:
+        return lettre, DOMAINES_ROME[lettre]
+    except KeyError as error:
+        raise ValueError(f"Code ROME sans domaine officiel : {code}") from error
+
+
+def famille_rome(code):
+    try:
+        return ROME_FAMILLES[code[:3]]
+    except KeyError as error:
+        raise ValueError(f"Code ROME sans sous-catégorie officielle : {code}") from error
+
+
+def description_rome(code):
+    description = ROME_DESCRIPTIONS.get(code)
+    if not description:
+        raise ValueError(f"Description officielle absente pour le code ROME : {code}")
+    return description
 
 
 def niveau(intitule):
@@ -240,29 +296,29 @@ class Geocodeur:
         except requests.RequestException:
             return None
 
-    def commune(self, code):
-        if code not in self.communes:
+    def commune(self, code, geocoder=True):
+        if code not in self.communes and geocoder:
             d = self._get(f"{GEO}/communes/{code}?fields=centre")
             self.communes[code] = d["centre"]["coordinates"][::-1] if d and d.get("centre") else None
-        return self.communes[code]
+        return self.communes.get(code)
 
-    def departement(self, code):
-        if code not in self.departements:
+    def departement(self, code, geocoder=True):
+        if code not in self.departements and geocoder:
             d = self._get(f"{GEO}/communes?codeDepartement={code}&fields=centre&boost=population&limit=1")
             self.departements[code] = d[0]["centre"]["coordinates"][::-1] if d else None
-        return self.departements[code]
+        return self.departements.get(code)
 
-    def position(self, lieu):
+    def position(self, lieu, geocoder=True):
         """(lat, lon, précision) ; précision = 'offre', 'commune', 'departement' ou None."""
         if lieu.get("latitude") and lieu.get("longitude"):
             return lieu["latitude"], lieu["longitude"], "offre"
         if lieu.get("commune"):
-            p = self.commune(lieu["commune"])
+            p = self.commune(lieu["commune"], geocoder)
             if p:
                 return p[0], p[1], "commune"
         dep = departement(lieu)
         if dep:
-            p = self.departement(dep)
+            p = self.departement(dep, geocoder)
             if p:
                 return p[0], p[1], "departement"
         return None, None, None
@@ -273,6 +329,13 @@ class Geocodeur:
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Normalise les offres actives et génère les statistiques.")
+    parser.add_argument(
+        "--geocoder",
+        action="store_true",
+        help="interroger geo.api.gouv.fr pour les communes absentes du cache (peut être long sur tout le ROME)",
+    )
+    args = parser.parse_args()
     jours = sorted((RACINE / "data" / "actives").glob("*.csv"))
     if not jours:
         raise SystemExit("Aucune extraction : lancez d'abord scripts/extraire.py")
@@ -304,7 +367,7 @@ def main():
         texte = (o.get("intitule") or "") + " " + (o.get("description") or "")
         t = texte.lower()
         smin, smax = salaire_min_max((o.get("salaire") or {}).get("libelle"))
-        lat, lon, precision = geo.position(lieu)
+        lat, lon, precision = geo.position(lieu, geocoder=args.geocoder)
         offres.append({
             "id": oid,
             "rome": rome,
@@ -334,6 +397,9 @@ def main():
             "temps": temps_travail(o),
             "postes": int(o.get("nombrePostes") or 1),
         })
+    if len(offres) != len(actives):
+        manquantes = len(actives) - len(offres)
+        raise RuntimeError(f"{manquantes} offres actives n'ont pas de version brute ; résumé incomplet.")
     geo.sauver()
 
     # Série : par jour et par métier
@@ -342,16 +408,36 @@ def main():
         for r in csv.DictReader(f):
             serie[r["date"]][r["rome"]] = int(r["total"])
 
+    offre_par_code = defaultdict(list)
+    for offre in offres:
+        offre_par_code[offre["rome"]].append(offre)
+    codes_actifs = {offre["rome"] for offre in offres}
+    contrats = {code: contrat_libelle(code) for code in {offre["contrat"] for offre in offres if offre["contrat"]}}
+    metiers_resume = []
+    for code, libelle in ROME_METIERS.items():
+        nom = METIERS[code][0] if code in METIERS else libelle
+        domaine_code, groupe = domaine_rome(code)
+        famille_code, famille = famille_rome(code)
+        description = description_rome(code)
+        metiers_resume.append({
+            "code": code,
+            "libelle": nom,
+            "domaine": domaine_code,
+            "groupe": groupe,
+            "famille_code": famille_code,
+            "famille": famille,
+            "description": description,
+            "coche": METIERS.get(code, (None, None, False))[2],
+            "actives": len(offre_par_code[code]),
+        })
+
     resume = {
         "date": jour,
         "source": "France Travail — API Offres d'emploi v2",
-        "requete": "une requête codeROME par métier, France entière",
-        "metiers": [{"code": c, "libelle": l, "groupe": g, "coche": k,
-                     "actives": sum(1 for o in offres if o["rome"] == c)}
-                    for c, (l, g, k) in METIERS.items()],
+        "requete": "une requête codeROME par fiche ROME, France entière (50 offres maximum par code)",
+        "metiers": metiers_resume,
         "outils": list(OUTILS),
-        "contrats": {c: contrat_libelle(c)
-                     for c in sorted({o["contrat"] for o in offres if o["contrat"]})},
+        "contrats": contrats,
         "niveaux": NIVEAUX_LIBELLES,
         "formations": FORMATIONS,
         "versions_conservees": nb_versions,
@@ -361,15 +447,149 @@ def main():
     }
     sortie = RACINE / "data" / "resume.json"
     sortie.write_text(json.dumps(resume, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+
+    # Les images des 23 fiches historiques sont des références statiques : le pipeline ne les régénère pas.
+    graphes_historiques = ("contrats.png", "salaires.png", "courbe_gauss_salaires.png")
+    absents = [
+        f"{code}/{nom}"
+        for code in METIERS
+        for nom in graphes_historiques
+        if not (RACINE / "data" / code / nom).is_file()
+    ]
+    if absents:
+        raise FileNotFoundError(f"Graphiques statiques manquants pour les 23 métiers : {', '.join(absents)}")
+
+    # Chaque code actif a son propre JSON compact ; les autres graphiques sont rendus en SVG dans le navigateur.
+    index_site = []
+    codes_site = sorted(codes_actifs)
+    for code in codes_site:
+        metier_offres = offre_par_code.get(code, [])
+        if code in METIERS:
+            nom, groupe, coche = METIERS[code]
+        else:
+            nom = ROME_METIERS[code]
+            _, groupe = domaine_rome(code)
+            coche = False
+        domaine_code, groupe = domaine_rome(code)
+        famille_code, famille = famille_rome(code)
+        description = description_rome(code)
+        dossier = RACINE / "data" / code
+        stats = ecrire_analyse(
+            dossier,
+            code,
+            nom,
+            jour,
+            metier_offres,
+            contrats,
+        )
+        if code in METIERS:
+            # Ne pas écraser les PNG historiques : ils conservent leur rendu d'origine.
+            resume_metier = {
+                "date": jour,
+                "code": code,
+                "nom": nom,
+                "domaine": domaine_code,
+                "groupe": groupe,
+                "famille_code": famille_code,
+                "famille": famille,
+                "description": description,
+                "offres": metier_offres,
+            }
+            (dossier / "resume.json").write_text(
+                json.dumps(resume_metier, ensure_ascii=False, separators=(",", ":")),
+                encoding="utf-8",
+            )
+        cdi = next((contrat for contrat in stats["contrats"] if contrat["code"] == "CDI"), None)
+        index_site.append({
+            "code": code,
+            "nom": nom,
+            "domaine": domaine_code,
+            "groupe": groupe,
+            "famille_code": famille_code,
+            "famille": famille,
+            "description": description,
+            "coche": coche,
+            "date": jour,
+            "total_offres": stats["total_offres"],
+            "cdi_percentage": cdi["pourcentage"] if cdi else 0,
+            "salary_mean": stats["salaires"]["mean"],
+            "salary_median": stats["salaires"]["median"],
+        })
+
+    stats_total = ecrire_analyse(
+        RACINE / "data" / "TOTAL",
+        "TOTAL",
+        "Ensemble des offres",
+        jour,
+        offres,
+        contrats,
+    )
+    stats_total["codes_rome"] = len(codes_actifs)
+    (RACINE / "data" / "TOTAL" / "stats.json").write_text(
+        json.dumps(stats_total, ensure_ascii=False, separators=(",", ":"), allow_nan=False) + "\n",
+        encoding="utf-8",
+    )
+    (RACINE / "data" / "TOTAL" / "resume.json").write_text(
+        json.dumps({
+            "date": jour,
+            "code": "TOTAL",
+            "nom": "Ensemble des offres",
+            "offres": [],
+            "offres_agregees": len(offres),
+            "codes_rome": sorted(codes_actifs),
+        }, ensure_ascii=False, separators=(",", ":")),
+        encoding="utf-8",
+    )
+    (RACINE / "data" / "metiers.json").write_text(
+        json.dumps(index_site, ensure_ascii=False, separators=(",", ":")) + "\n",
+        encoding="utf-8",
+    )
+    chatbot = {
+        "version": 1,
+        "date": jour,
+        "knowledge_base": "data/metiers.json",
+        "total_metiers_actifs": len(index_site),
+        "champs_connaissance": [
+            "code",
+            "nom",
+            "description",
+            "domaine",
+            "groupe",
+            "famille_code",
+            "famille",
+            "total_offres",
+            "cdi_percentage",
+            "salary_mean",
+            "salary_median",
+        ],
+        "domaines": [
+            {"code": code, "libelle": libelle}
+            for code, libelle in DOMAINES_ROME.items()
+        ],
+        "consigne": (
+            "Répondre à partir des fiches ROME actives chargées depuis knowledge_base, en présentant "
+            "la description synthétique officielle du métier recherché. "
+            "Pour toute recherche, afficher le volume, la part de CDI et les salaires moyen et médian "
+            "quand ils sont renseignés, puis proposer un lien vers la fiche du code ROME."
+        ),
+    }
+    (RACINE / "data" / "chatbot.json").write_text(
+        json.dumps(chatbot, ensure_ascii=False, separators=(",", ":")) + "\n",
+        encoding="utf-8",
+    )
+
     prec = defaultdict(int)
     for o in offres:
         prec[o["prec"]] += 1
     print(f"Écrit : {sortie.relative_to(RACINE)} — {len(offres)} offres actives du {jour}, "
           f"{sortie.stat().st_size // 1024} Ko")
-    print(f"Positions : {dict(prec)} ({geo.appels} appels geo.api.gouv.fr)")
+    suffixe_geo = "appels geo.api.gouv.fr" if args.geocoder else "requêtes geo.api.gouv.fr (cache local uniquement)"
+    print(f"Positions : {dict(prec)} ({geo.appels} {suffixe_geo})")
     avec = [o for o in offres if o["smin"] is not None]
     part = 100 * len(avec) // len(offres) if offres else 0
     print(f"Salaire affiché par {len(avec)} offres sur {len(offres)} ({part} %)")
+    print(f"Statistiques individuelles actualisées pour {len(codes_site)} fiches ROME "
+          f"réparties dans 14 domaines officiels, plus une fiche consolidée pour {len(offres)} offres.")
 
 
 if __name__ == "__main__":
